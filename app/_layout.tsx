@@ -7,6 +7,8 @@ import GlobalHeader from '@/components/GlobalHeader';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   return (
@@ -23,17 +25,15 @@ function NavigationGate() {
   const router = useRouter();
 
   React.useEffect(() => {
-    if (loading) return; // wait for async storage load
+    if (loading) return;
 
     const inPublicGroup = segments[0] === "(public)";
 
     if (!isAuthenticated) {
-      // Not logged in → redirect to login
       if (!inPublicGroup) {
         router.replace("/(public)/login");
       }
     } else {
-      // Logged in → redirect to tabs home
       if (inPublicGroup) {
         router.replace("/(tabs)");
       }
@@ -42,14 +42,31 @@ function NavigationGate() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <GlobalHeader />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(public)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-      </Stack>
+      
+      {/* 🔥 Safe Area Wrapper (Top + Bottom padding) */}
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <GlobalHeader />
+      </SafeAreaView>
 
-      <StatusBar style="auto" />
+      {/* Screens below header */}
+      <View style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(public)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        </Stack>
+      </View>
+
+      <SafeAreaView edges={["bottom"]} />
+
+      <StatusBar style="light" />
     </ThemeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: "#081638", // bg1 theme color (your design)
+    paddingHorizontal: 10,
+  },
+});

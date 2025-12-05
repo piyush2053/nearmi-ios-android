@@ -4,7 +4,7 @@ import Constants from "expo-constants";
 
 const API_BASE_URL =
   Constants.expoConfig?.extra?.API_URL ||
-  "http://nearmi-ccd3caa6gcetcaa5.centralindia-01.azurewebsites.net";
+  "https://nearmi-ccd3caa6gcetcaa5.centralindia-01.azurewebsites.net";
 
 
 axios.interceptors.request.use((config) => {
@@ -40,9 +40,7 @@ export const removeToken = async () => {
   await AsyncStorage.removeItem("token");
 };
 
-// ----------------- API SERVICES ----------------- //
 export const core_services = {
-  // ---------------- LOGIN ---------------- //
   loginUser: async ({
     email,
     password,
@@ -56,8 +54,6 @@ export const core_services = {
         { email, password },
         { headers: { "Content-Type": "application/json" } }
       );
-console.log(email, password, '@@@@@@@--------->incomin')
-console.log(response, '@@@@@@@--------->outgoing')
       const token = response.data.token;
       if (token) {
         await setToken(token);

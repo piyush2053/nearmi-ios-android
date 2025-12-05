@@ -189,8 +189,6 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.headerRow}>
           <Text style={[styles.headerTitle, { color: theme.bg2 }]}>Nearby</Text>
-
-          {/* Animated VIBES replacement: simple gradient-like text effect via color accent */}
           <Text style={[styles.vibesText, { color: theme.bg6 }]}>VIBES</Text>
         </View>
 
@@ -341,7 +339,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 5,
   },
   headerTitle: {
     fontSize: 18,
@@ -350,7 +348,6 @@ const styles = StyleSheet.create({
   vibesText: {
     fontSize: 18,
     fontWeight: "800",
-    marginLeft: 8,
   },
   searchWrap: {
     marginTop: 12,

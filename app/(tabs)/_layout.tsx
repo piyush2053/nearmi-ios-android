@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function TabsLayout() {
   return (
@@ -11,65 +13,62 @@ export default function TabsLayout() {
           height: 70,
           paddingBottom: 10,
           paddingTop: 10,
+          backgroundColor: "#081638", // bg1
+          borderTopColor: "rgba(0,0,0,0.1)"
         },
+        tabBarActiveTintColor: "#29C9FF",
+        tabBarInactiveTintColor: "rgba(255,255,255,0.4)",
       }}
     >
-      {/* Home */}
+      {/* HOME */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons name="home" size={22} color={color} />
           ),
         }}
       />
 
-      {/* Bookings */}
+      {/* BOOKINGS */}
       <Tabs.Screen
         name="bookings"
         options={{
           title: "Bookings",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="calendar" size={22} color={color} />
           ),
         }}
       />
 
-      {/* Host Event (Floating Button) */}
+      {/* CREATE EVENTS — CUSTOM FLOATING BUTTON */}
       <Tabs.Screen
         name="create_events"
         options={{
           title: "",
-          tabBarButton: ({ onPress }) => (
-            <View style={styles.floatingButtonContainer}>
-              <TouchableOpacity onPress={onPress} style={styles.floatingButton}>
-                <Ionicons name="add" size={28} color="white" />
-              </TouchableOpacity>
-            </View>
-          ),
+          tabBarButton: ({ onPress }) => <FloatingAddButton onPress={onPress} />,
         }}
       />
 
-
-      {/* Messages */}
+      {/* MESSAGES */}
       <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="chatbubbles" size={22} color={color} />
           ),
         }}
       />
 
-      {/* Profile */}
+      {/* PROFILE */}
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={22} color={color} />
           ),
         }}
       />
@@ -77,18 +76,80 @@ export default function TabsLayout() {
   );
 }
 
+function FloatingAddButton({ onPress }:any) {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 1100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1100,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <View style={styles.floatingButtonContainer}>
+      {/* Pulsing Glow */}
+      <Animated.View
+        style={[
+          styles.glowCircle,
+          {
+            transform: [{ scale: pulseAnim }],
+          },
+        ]}
+      />
+
+      {/* Gradient Button */}
+      <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+        <LinearGradient
+          colors={["#0c2050", "#29C9FF"]}
+          start={{ x: 0.1, y: 1 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.floatingButton}
+        >
+          <Ionicons name="add" size={26} color="#081638" />
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   floatingButtonContainer: {
     position: "absolute",
-    bottom: 10,
+    bottom: 5,
+    left: "50%",
+    transform: [{ translateX: -29 }], // centers the button perfectly
+    alignItems: "center",
+    justifyContent: "center",
   },
+
+  glowCircle: {
+    position: "absolute",
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+  },
+
   floatingButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 40,
-    backgroundColor: "#29C9FF",
+    width: 58,
+    height: 58,
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 8,
+    shadowColor: "#29C9FF",
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
 });
