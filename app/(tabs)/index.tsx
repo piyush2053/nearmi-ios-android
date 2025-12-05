@@ -1,5 +1,6 @@
 
 import { Colors } from "@/constants/theme";
+import { useGlobalRefresh } from "@/contexts/RefreshContext";
 import { core_services } from "@/services/api";
 import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
@@ -8,6 +9,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -63,7 +65,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "dark";
   const theme = Colors[colorScheme];
-
+  const { refreshing, onRefresh } = useGlobalRefresh();
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [searchText, setSearchText] = useState<string>("");
@@ -116,9 +118,9 @@ export default function HomeScreen() {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return (R * c).toFixed(1); // km with 1 decimal
@@ -185,7 +187,18 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={styles.main} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.main}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.bg6}
+          />
+        }
+      >
+
         {/* Header */}
         <View style={styles.headerRow}>
           <Text style={[styles.headerTitle, { color: theme.bg2 }]}>Nearby</Text>

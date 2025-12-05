@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 import GlobalHeader from '@/components/GlobalHeader';
 import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { RefreshProvider } from '@/contexts/RefreshContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -44,27 +45,23 @@ function NavigationGate() {
   }, [isAuthenticated, loading, segments]);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <RefreshProvider>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <SafeAreaView style={[styles.safeTop, { backgroundColor: theme.bg7 }]} edges={["top"]}>
+          <GlobalHeader />
+        </SafeAreaView>
+        <View style={{ flex: 1, backgroundColor: theme.bg7 }}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(public)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          </Stack>
+        </View>
+        <SafeAreaView edges={["bottom"]} style={{ backgroundColor: theme.bg7 }} />
 
-      {/* 🔥 Safe area top with bg1 */}
-      <SafeAreaView style={[styles.safeTop, { backgroundColor: theme.bg7 }]} edges={["top"]}>
-        <GlobalHeader />
-      </SafeAreaView>
-
-      {/* Screens below */}
-      <View style={{ flex: 1, backgroundColor: theme.bg7 }}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(public)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-        </Stack>
-      </View>
-
-      {/* Bottom safe area (for iPhone swipe bar) */}
-      <SafeAreaView edges={["bottom"]} style={{ backgroundColor: theme.bg7 }} />
-
-      <StatusBar style="light" />
-    </ThemeProvider>
+        <StatusBar style="light" />
+      </ThemeProvider>
+    </RefreshProvider>
   );
 }
 

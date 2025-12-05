@@ -1,15 +1,18 @@
 // app/(tabs)/create-event.tsx
-
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { core_services } from "@/services/api";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
+  Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -23,20 +26,28 @@ export default function CreateEventScreen() {
   const colorScheme = useColorScheme() ?? "dark";
   const theme = Colors[colorScheme];
 
-  const { user }:any = useAuth();
+  const { user }: any = useAuth();
 
   const [eventTitle, setEventTitle] = useState("");
   const [eventDesc, setEventDesc] = useState("");
   const [numTickets, setNumTickets] = useState(10);
   const [directJoin, setDirectJoin] = useState(true);
   const [eventCategory, setEventCategory] = useState("");
-  const [eventDate, setEventDate] = useState("");
-  const [eventTime, setEventTime] = useState("");
   const [locationStr, setLocationStr] = useState("");
+  const [categories, setCategories] = useState<any[]>([]);
+  const [date, setDate] = useState<Date | null>(null);
+  const [time, setTime] = useState<Date | null>(null);
+  const router = useRouter();
 
-  const [categories, setCategories] = useState([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  useEffect(() => {
+    Notifications.requestPermissionsAsync();
+  }, []);
 
-  // Fetch categories
+  // Category Dropdown
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -49,7 +60,6 @@ export default function CreateEventScreen() {
     load();
   }, []);
 
-  // Auto fetch location
   useEffect(() => {
     fetchLocationAuto();
   }, []);
@@ -66,9 +76,20 @@ export default function CreateEventScreen() {
     const lng = pos.coords.longitude;
     setLocationStr(`${lat}, ${lng}`);
   };
+  const triggerSuccessNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Event Created",
+        body: "Your event has been created successfully.",
+        sound: true,
+      },
+      trigger: null,
+    });
+  };
+
 
   const handleCreateEvent = async () => {
-    if (!eventTitle || !eventDesc || !eventCategory || !eventDate || !eventTime) {
+    if (!eventTitle || !eventDesc || !eventCategory || !date || !time) {
       Alert.alert("Required", "Please fill all required fields.");
       return;
     }
@@ -78,14 +99,18 @@ export default function CreateEventScreen() {
       return;
     }
 
-    const eventDateTime = new Date(`${eventDate}T${eventTime}:00Z`).toISOString();
+    const mergedDateTime = new Date(date);
+    mergedDateTime.setHours(time.getHours());
+    mergedDateTime.setMinutes(time.getMinutes());
+
+    const eventDateTime = mergedDateTime.toISOString();
 
     const payload = {
       eventTitle,
       eventDesc,
       categoryId: eventCategory,
       location: locationStr,
-      userId: user?.userId || "UNKNOWN_USER",
+      userId: user?.id || "UNKNOWN_USER",
       eventTime: eventDateTime,
       directJoin,
       numTickets,
@@ -93,7 +118,8 @@ export default function CreateEventScreen() {
 
     try {
       await core_services.createEvent(payload);
-      Alert.alert("Success", "Event created successfully.");
+      await triggerSuccessNotification();
+      router.replace("/");
     } catch (err) {
       Alert.alert("Error", "Failed creating event.");
     }
@@ -101,6 +127,7 @@ export default function CreateEventScreen() {
 
   return (
     <ScrollView style={[styles.wrap, { backgroundColor: theme.bg1 }]}>
+
       <Text style={[styles.heading, { color: theme.bg6 }]}>Create Event</Text>
 
       {/* Title */}
@@ -134,47 +161,100 @@ export default function CreateEventScreen() {
         multiline
       />
 
-      {/* Category */}
+      {/* Category Dropdown */}
       <Text style={[styles.label, { color: theme.bg6 }]}>Select Category</Text>
-      <View style={[styles.pickerContainer, { backgroundColor: theme.bg3 }]}>
-        <ScrollView>
-          {categories.map((cat: any) => (
+
+      <TouchableOpacity
+        onPress={() => setCategoryModalVisible(true)}
+        style={[styles.input, { backgroundColor: theme.bg3, justifyContent: "center" }]}
+      >
+        <Text style={{ color: eventCategory ? theme.bg6 : "#999" }}>
+          {eventCategory ? categories?.find((c: any) => c.CategoryId === eventCategory)?.CategoryName : "Select Category"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Category Modal */}
+      <Modal visible={categoryModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalBox, { backgroundColor: theme.bg2 }]}>
+
+            {/* None Option */}
             <TouchableOpacity
-              key={cat.CategoryId}
-              onPress={() => setEventCategory(cat.CategoryId)}
+              onPress={() => {
+                setEventCategory("");
+                setCategoryModalVisible(false);
+              }}
             >
-              <Text
-                style={[
-                  styles.pickerItem,
-                  { color: eventCategory === cat.CategoryId ? theme.bg6 : theme.bg2 },
-                ]}
-              >
-                {cat.CategoryName}
-              </Text>
+              <Text style={[styles.modalItem, { color: theme.bg1 }]}>None</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
 
-      {/* Date */}
+            {categories?.map((cat: any) => (
+              <TouchableOpacity
+                key={cat.CategoryId}
+                onPress={() => {
+                  setEventCategory(cat.CategoryId);
+                  setCategoryModalVisible(false);
+                }}
+              >
+                <Text style={[styles.modalItem, { color: theme.bg1 }]}>
+                  {cat.CategoryName}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
+              <Text style={[styles.modalClose, { color: theme.bg6 }]}>Close</Text>
+            </TouchableOpacity>
+
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Picker */}
       <Text style={[styles.label, { color: theme.bg6 }]}>Event Date</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor="#999"
-        value={eventDate}
-        onChangeText={setEventDate}
-      />
+      <TouchableOpacity
+        onPress={() => setShowDatePicker(true)}
+        style={[styles.input, { backgroundColor: theme.bg3, justifyContent: "center" }]}
+      >
+        <Text style={{ color: date ? theme.bg6 : "#999" }}>
+          {date ? date.toDateString() : "Pick a Date"}
+        </Text>
+      </TouchableOpacity>
 
-      {/* Time */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={date || new Date()}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(e: any, value: any) => {
+            setShowDatePicker(false);
+            if (value) setDate(value);
+          }}
+        />
+      )}
+
+      {/* Time Picker */}
       <Text style={[styles.label, { color: theme.bg6 }]}>Event Time</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]}
-        placeholder="HH:MM"
-        placeholderTextColor="#999"
-        value={eventTime}
-        onChangeText={setEventTime}
-      />
+      <TouchableOpacity
+        onPress={() => setShowTimePicker(true)}
+        style={[styles.input, { backgroundColor: theme.bg3, justifyContent: "center" }]}
+      >
+        <Text style={{ color: time ? theme.bg6 : "#999" }}>
+          {time ? time.toLocaleTimeString().slice(0, 5) : "Pick Time"}
+        </Text>
+      </TouchableOpacity>
+
+      {showTimePicker && (
+        <DateTimePicker
+          value={time || new Date()}
+          mode="time"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(e, value) => {
+            setShowTimePicker(false);
+            if (value) setTime(value);
+          }}
+        />
+      )}
 
       {/* Tickets */}
       <Text style={[styles.label, { color: theme.bg6 }]}>Number of Tickets</Text>
@@ -196,56 +276,44 @@ export default function CreateEventScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Direct Join Switch */}
-      <Text style={[styles.label, { color: theme.bg6 }]}>Direct Join</Text>
-      <Switch
-        value={directJoin}
-        onValueChange={setDirectJoin}
-        thumbColor={theme.bg6}
-        trackColor={{ true: theme.bg7, false: "#666" }}
-      />
+      {/* Direct Join Checkbox */}
+      <TouchableOpacity
+        style={styles.checkboxRow}
+        onPress={() => setDirectJoin(!directJoin)}
+      >
+        <View
+          style={[
+            styles.checkboxBox,
+            {
+              borderColor: theme.bg6,
+              backgroundColor: directJoin ? "transparent" : theme.bg6,
+            },
+          ]}
+        />
+        <Text style={[styles.checkboxLabel, { color: theme.bg6 }]}>
+          Ask to Join
+        </Text>
+      </TouchableOpacity>
 
-      {/* Create Button */}
+      {/* Create Event Button */}
       <TouchableOpacity
         style={[styles.createBtn, { backgroundColor: theme.bg6 }]}
         onPress={handleCreateEvent}
       >
         <Text style={[styles.createBtnText, { color: theme.bg1 }]}>Create Event</Text>
       </TouchableOpacity>
+
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    flex: 1,
-    padding: 16,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 6,
-    marginTop: 14,
-  },
-  input: {
-    height: 48,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-  },
-  textarea: {
-    borderRadius: 10,
-    padding: 14,
-    minHeight: 80,
-  },
-  suggestions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 6,
-  },
+  wrap: { flex: 1, padding: 16 },
+  heading: { fontSize: 24, fontWeight: "700", marginBottom: 20 },
+  label: { fontSize: 14, marginBottom: 6, marginTop: 14 },
+  input: { height: 48, borderRadius: 10, paddingHorizontal: 14 },
+  textarea: { borderRadius: 10, padding: 14, minHeight: 80 },
+  suggestions: { flexDirection: "row", flexWrap: "wrap", marginTop: 6 },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -255,20 +323,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
   },
-  pickerContainer: {
-    borderRadius: 10,
-    maxHeight: 140,
-    padding: 10,
-  },
-  pickerItem: {
-    paddingVertical: 8,
-    fontSize: 14,
-  },
-  ticketRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-  },
+  ticketRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
   ticketBtn: {
     width: 36,
     height: 36,
@@ -276,9 +331,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
   },
-  ticketCount: {
-    width: 50,
+  ticketCount: { width: 50, textAlign: "center", fontSize: 16 },
+  checkboxRow: { flexDirection: "row", alignItems: "center", marginTop: 12 },
+  checkboxBox: {
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+    borderRadius: 6,
+    marginRight: 10,
+  },
+  checkboxLabel: { fontSize: 16 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    padding: 30,
+  },
+  modalBox: {
+    borderRadius: 12,
+    padding: 16,
+  },
+  modalItem: {
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+  modalClose: {
     textAlign: "center",
+    marginTop: 14,
     fontSize: 16,
   },
   createBtn: {
@@ -288,8 +367,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  createBtnText: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  createBtnText: { fontSize: 16, fontWeight: "700" },
 });

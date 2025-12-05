@@ -59,7 +59,7 @@ export default function GlobalHeader() {
       alignItems: "center",
     },
     cityText: {
-      fontSize: 18,
+      fontSize: 15,
       fontWeight: "700",
       color: "#29C9FF", // bg6
     },
@@ -72,9 +72,8 @@ export default function GlobalHeader() {
 
   return (
     <View style={styles.header}>
-      {/* LEFT — Location Icon + City */}
       <View style={styles.locationRow}>
-        <Feather name="map-pin" size={18} color="#29C9FF" style={{ marginRight: 4 }} />
+        <Feather name="map-pin" size={13} color="#29C9FF" style={{ marginRight: 4 }} />
         <Text style={styles.cityText}>{city}</Text>
       </View>
 

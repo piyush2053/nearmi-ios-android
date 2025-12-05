@@ -9,21 +9,20 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
+  FlatList, Image, KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 export default function MessagesChatScreen() {
   const params = useLocalSearchParams() as any;
   const eventId = params.eventId;
   const router = useRouter();
-  const { user }:any = useAuth();
+  const { user }: any = useAuth();
   const colorScheme = "dark";
   const theme = Colors[colorScheme];
 
@@ -167,12 +166,25 @@ export default function MessagesChatScreen() {
     <KeyboardAvoidingView style={[styles.container, { backgroundColor: theme.bg1 }]} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={80}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.bg1 }]}>
-        <TouchableOpacity onPress={() => router.back()}>
+
+        {/* Back Button */}
+        <TouchableOpacity onPress={() => router.back()} style={{ paddingRight: 10 }}>
           <Ionicons name="arrow-back" size={22} color={theme.bg2} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.bg2 }]} numberOfLines={1}>
-          {eventData.EventTitle}
-        </Text>
+
+        {/* Group Icon + Title */}
+        <View style={styles.headerInfo}>
+          <Image
+            source={{ uri: "https://cdn-icons-png.flaticon.com/512/12886/12886428.png" }}
+            style={styles.headerAvatar}
+          />
+
+          <Text style={[styles.headerTitle, { color: theme.bg2 }]} numberOfLines={1}>
+            {eventData.EventTitle}
+          </Text>
+        </View>
+
+        {/* Placeholder to balance layout */}
         <View style={{ width: 32 }} />
       </View>
 
@@ -235,6 +247,7 @@ const styles = StyleSheet.create({
 
   inputWrap: {
     padding: 12,
+    marginBottom: 20,
     borderTopWidth: 0,
   },
   input: {
@@ -252,4 +265,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  headerInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  headerAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginRight: 10,
+    backgroundColor: "#444",
+  },
+
 });
