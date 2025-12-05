@@ -1,9 +1,11 @@
 // app/(public)/register.tsx
 import { Colors } from "@/constants/theme";
 import { core_services } from "@/services/api";
+import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -12,21 +14,70 @@ export default function RegisterScreen() {
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [location, setLocation] = useState("");
+  const [locationStr, setLocationStr] = useState(""); 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    Notifications.requestPermissionsAsync();
+  }, []);
+
+  const getLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Location Required",
+        "To proceed with registration, please turn on location and come back."
+      );
+      return;
+    }
+
+    const position = await Location.getCurrentPositionAsync({});
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    setLocationStr(`${lat}, ${lng}`);
+  };
+
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+  const triggerSuccessNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Registration Successful",
+        body: "You will receive your details shortly via email.",
+        sound: true,
+      },
+      trigger: null,
+    });
+  };
+
   const handleRegister = async () => {
-    if (!username || !email || !location || !password || !confirmPassword) return alert("Please fill all fields");
+    if (!username || !email || !password || !confirmPassword)
+      return alert("Please fill all fields");
+
+    if (!locationStr)
+      return alert("Location not detected. Please enable location and try again.");
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return alert("Enter valid email");
+
     if (password !== confirmPassword) return alert("Passwords do not match");
 
     setLoading(true);
     try {
-      await core_services.registerUser({ username, email, password, location });
-      alert("Account created successfully!");
+      await core_services.registerUser({
+        username,
+        email,
+        password,
+        location: locationStr,
+      });
+
+      await triggerSuccessNotification();
       router.replace("/(public)/login");
     } catch (err: any) {
       alert(err?.response?.data?.message || err?.message || "Registration failed");
@@ -40,18 +91,57 @@ export default function RegisterScreen() {
       <Text style={[styles.logo, { color: theme.bg6 }]}>NearMi</Text>
 
       <View style={styles.form}>
-        <TextInput placeholder="Username" placeholderTextColor="#aaa" value={username} onChangeText={setUsername} style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]} />
-        <TextInput placeholder="Email" placeholderTextColor="#aaa" value={email} onChangeText={setEmail} style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]} keyboardType="email-address" autoCapitalize="none" />
-        <TextInput placeholder="Location" placeholderTextColor="#aaa" value={location} onChangeText={setLocation} style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]} />
-        <TextInput placeholder="Password" placeholderTextColor="#aaa" value={password} onChangeText={setPassword} style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]} secureTextEntry />
-        <TextInput placeholder="Confirm Password" placeholderTextColor="#aaa" value={confirmPassword} onChangeText={setConfirmPassword} style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]} secureTextEntry />
+        <TextInput
+          placeholder="Username"
+          placeholderTextColor="#aaa"
+          value={username}
+          onChangeText={setUsername}
+          style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]}
+        />
 
-        <TouchableOpacity onPress={handleRegister} style={[styles.btn, { backgroundColor: theme.bg2 }]} disabled={loading}>
-          {loading ? <ActivityIndicator color={theme.bg1} /> : <Text style={[styles.btnText, { color: theme.bg1 }]}>Create Account</Text>}
+        <TextInput
+          placeholder="Email"
+          placeholderTextColor="#aaa"
+          value={email}
+          onChangeText={setEmail}
+          style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <TextInput
+          placeholder="Password"
+          placeholderTextColor="#aaa"
+          value={password}
+          onChangeText={setPassword}
+          style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]}
+          secureTextEntry
+        />
+
+        <TextInput
+          placeholder="Confirm Password"
+          placeholderTextColor="#aaa"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]}
+          secureTextEntry
+        />
+
+
+        <TouchableOpacity
+          onPress={handleRegister}
+          style={[styles.btn, { backgroundColor: theme.bg2 }]}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={theme.bg1} />
+          ) : (
+            <Text style={[styles.btnText, { color: theme.bg1 }]}>Create Account</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/(public)/login")} style={{ marginTop: 12 }}>
-          <Text style={{ color: "#bbb" }}>Already have an account? Login</Text>
+          <Text style={{ color: "#bbb", textAlign:"center" }}>Already have an account? Login</Text>
         </TouchableOpacity>
       </View>
     </View>
