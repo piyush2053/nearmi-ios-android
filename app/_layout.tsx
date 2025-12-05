@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import GlobalHeader from '@/components/GlobalHeader';
+import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
@@ -19,7 +20,9 @@ export default function RootLayout() {
 }
 
 function NavigationGate() {
-  const colorScheme = useColorScheme();
+  const rawScheme = useColorScheme();
+  const colorScheme = rawScheme ?? "dark"; // SAFE fallback
+  const theme = Colors[colorScheme];
   const { isAuthenticated, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -42,14 +45,14 @@ function NavigationGate() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      
-      {/* 🔥 Safe Area Wrapper (Top + Bottom padding) */}
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+
+      {/* 🔥 Safe area top with bg1 */}
+      <SafeAreaView style={[styles.safeTop, { backgroundColor: theme.bg7 }]} edges={["top"]}>
         <GlobalHeader />
       </SafeAreaView>
 
-      {/* Screens below header */}
-      <View style={{ flex: 1 }}>
+      {/* Screens below */}
+      <View style={{ flex: 1, backgroundColor: theme.bg7 }}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(public)" />
           <Stack.Screen name="(tabs)" />
@@ -57,7 +60,8 @@ function NavigationGate() {
         </Stack>
       </View>
 
-      <SafeAreaView edges={["bottom"]} />
+      {/* Bottom safe area (for iPhone swipe bar) */}
+      <SafeAreaView edges={["bottom"]} style={{ backgroundColor: theme.bg7 }} />
 
       <StatusBar style="light" />
     </ThemeProvider>
@@ -65,8 +69,7 @@ function NavigationGate() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: "#081638", // bg1 theme color (your design)
+  safeTop: {
     paddingHorizontal: 10,
   },
 });

@@ -1,4 +1,6 @@
+import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useColorScheme } from "@/hooks/use-color-scheme.web";
 import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useRouter, useSegments } from "expo-router";
@@ -9,7 +11,9 @@ export default function GlobalHeader() {
   const { logout } = useAuth();
   const router = useRouter();
   const segments = useSegments();
-
+  const rawScheme = useColorScheme();
+  const colorScheme = rawScheme ?? "dark";
+  const theme = Colors[colorScheme];
   const inPublicGroup = segments[0] === "(public)";
   const [city, setCity] = useState<string>("Locating...");
 
@@ -40,6 +44,27 @@ export default function GlobalHeader() {
 
   if (inPublicGroup) return null;
 
+  const styles = StyleSheet.create({
+    header: {
+      width: "100%",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: theme.bg7, 
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    locationRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    cityText: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: "#29C9FF", // bg6
+    },
+  });
+
   const handleLogout = async () => {
     await logout();
     router.replace("/(public)/login");
@@ -60,24 +85,3 @@ export default function GlobalHeader() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    width: "100%",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#050e24ff", // bg1
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  cityText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#29C9FF", // bg6
-  },
-});

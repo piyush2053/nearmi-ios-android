@@ -10,7 +10,7 @@ export const Colors = {
     tabIconSelected: "#0a7ea4",
 
     // NearMi brand colors (light mode)
-    bg1: "#081638",
+    bg1: "#020a1eff",
     bg2: "#ffffff",
     bg3: "#282c34",
     bg4: "#0c2050",
@@ -26,9 +26,7 @@ export const Colors = {
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
     tabIconSelected: "#fff",
-
-    // NearMi brand colors (dark mode – SAME as light because your web used same palette)
-    bg1: "#081638",
+    bg1: "#020a1eff",
     bg2: "#ffffff",
     bg3: "#282c34",
     bg4: "#0c2050",

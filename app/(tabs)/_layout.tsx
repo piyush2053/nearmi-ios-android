@@ -1,3 +1,5 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme.web";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
@@ -5,6 +7,10 @@ import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function TabsLayout() {
+   const rawScheme = useColorScheme();
+    const colorScheme = rawScheme ?? "dark"; // SAFE fallback
+    const theme = Colors[colorScheme];
+  
   return (
     <Tabs
       screenOptions={{
@@ -13,7 +19,7 @@ export default function TabsLayout() {
           height: 70,
           paddingBottom: 10,
           paddingTop: 10,
-          backgroundColor: "#081638", // bg1
+          backgroundColor: theme.bg7 , // bg1
           borderTopColor: "rgba(0,0,0,0.1)"
         },
         tabBarActiveTintColor: "#29C9FF",
