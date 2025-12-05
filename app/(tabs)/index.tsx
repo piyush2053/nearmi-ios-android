@@ -157,9 +157,6 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg1 }]}>
-      {/* Hidden span equivalent removed (not needed in RN) */}
-
-      {/* Location disabled overlay */}
       {!locationEnabled && (
         <View style={styles.locationOverlay}>
           <View style={[styles.locationBox, { backgroundColor: "#FBBF24" }]}>
@@ -211,8 +208,8 @@ export default function HomeScreen() {
             value={searchText}
             onChangeText={setSearchText}
             placeholder="Search nearby events..."
-            placeholderTextColor={"#bbb"}
-            style={[styles.searchInput, { borderColor: theme.bg6, color: theme.bg2 }]}
+            placeholderTextColor={"#bbbbbbc2"}
+            style={[styles.searchInput, { backgroundColor: theme.bg4 }]}
           />
           <Feather name="search" size={18} color={theme.bg2} style={styles.searchIcon} />
         </View>
@@ -276,8 +273,19 @@ export default function HomeScreen() {
         </View>
 
         {/* Filters chips */}
+        {/* Filters Header with Clear Button */}
         <View style={{ marginTop: 16 }}>
-          <Text style={[styles.sectionLabel, { color: theme.bg2 }]}>Filters</Text>
+          <View style={styles.filtersHeader}>
+            <Text style={[styles.sectionLabel, { color: "white" }]}>Filters</Text>
+
+            {(selectedCategory || searchText) && (
+              <TouchableOpacity onPress={() => { setSelectedCategory(null); setSearchText(""); }}>
+                <Text style={styles.clearFilterText}>Clear Filters</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Filters chips */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
             <View style={{ flexDirection: "row", paddingRight: 8 }}>
               {categories.map((cat) => {
@@ -289,18 +297,21 @@ export default function HomeScreen() {
                     style={[
                       styles.chip,
                       {
-                        backgroundColor: active ? theme.bg6 : theme.bg2,
+                        backgroundColor: active ? theme.bg7 : theme.bg4,
                         borderColor: theme.bg4,
                       },
                     ]}
                   >
-                    <Text style={{ color: active ? theme.bg2 : theme.bg1, fontWeight: "600" }}>{cat}</Text>
+                    <Text style={{ color: active ? theme.bg2 : "#bbbbbbc2", fontWeight: "600" }}>
+                      {cat}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
           </ScrollView>
         </View>
+
 
         {/* Hosted Venues (hardcoded display simplified) */}
         <View style={{ marginTop: 20 }}>
@@ -486,4 +497,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     borderRadius: 8,
   },
+  filtersHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  clearFilterText: {
+    color: "#bbbbbb7e",
+    fontSize: 12,
+    fontWeight: "600",
+    padding: 4,
+  },
+
 });
