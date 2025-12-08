@@ -19,7 +19,7 @@ export default function TabsLayout() {
           height: 70,
           paddingBottom: 10,
           paddingTop: 10,
-          backgroundColor: theme.bg7 , // bg1
+          backgroundColor: theme.bg1 , // bg1
           borderTopColor: "rgba(0,0,0,0.1)"
         },
         tabBarActiveTintColor: "#29C9FF",

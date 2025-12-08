@@ -1,16 +1,18 @@
 
 import { Colors } from "@/constants/theme";
 import { Feather, FontAwesome5, Ionicons } from "@expo/vector-icons";
+import * as Notifications from "expo-notifications";
 import React, { useEffect, useState } from "react";
+
 import {
-    ActivityIndicator,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from "react-native";
 
 export default function ProfileScreen() {
@@ -96,11 +98,23 @@ export default function ProfileScreen() {
           </View>
 
           {/* Edit Profile */}
-          <TouchableOpacity
-            style={[styles.editBtn, { backgroundColor: c.bg6 }]}
-          >
-            <Text style={styles.editBtnText}>Edit Profile</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+  style={[styles.editBtn, { backgroundColor: c.bg6 }]}
+  onPress={async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Profile Edited",
+        body: "You will receive an email notification shortly",
+        sound: "default", // Plays default notification sound
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      },
+      trigger: null, // fires immediately
+    });
+  }}
+>
+  <Text style={styles.editBtnText}>Edit Profile</Text>
+</TouchableOpacity>
+
         </View>
       </View>
 

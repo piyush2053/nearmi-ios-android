@@ -1,15 +1,15 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
 import GlobalHeader from '@/components/GlobalHeader';
 import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { RefreshProvider } from '@/contexts/RefreshContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import "@/notifications/setup";
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
@@ -57,7 +57,7 @@ function NavigationGate() {
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />
           </Stack>
         </View>
-        <SafeAreaView edges={["bottom"]} style={{ backgroundColor: theme.bg7 }} />
+        <SafeAreaView edges={["bottom"]} style={{ backgroundColor: theme.bg1 }} />
 
         <StatusBar style="light" />
       </ThemeProvider>

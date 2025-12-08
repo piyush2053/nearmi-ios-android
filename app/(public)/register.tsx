@@ -14,7 +14,7 @@ export default function RegisterScreen() {
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [locationStr, setLocationStr] = useState(""); 
+  const [locationStr, setLocationStr] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,11 +50,13 @@ export default function RegisterScreen() {
       content: {
         title: "Registration Successful",
         body: "You will receive your details shortly via email.",
-        sound: true,
+        sound: "default",
+        priority: Notifications.AndroidNotificationPriority.HIGH,
       },
       trigger: null,
     });
   };
+
 
   const handleRegister = async () => {
     if (!username || !email || !password || !confirmPassword)
@@ -141,7 +143,7 @@ export default function RegisterScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/(public)/login")} style={{ marginTop: 12 }}>
-          <Text style={{ color: "#bbb", textAlign:"center" }}>Already have an account? Login</Text>
+          <Text style={{ color: "#bbb", textAlign: "center" }}>Already have an account? Login</Text>
         </TouchableOpacity>
       </View>
     </View>

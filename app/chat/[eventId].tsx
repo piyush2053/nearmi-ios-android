@@ -25,7 +25,8 @@ export default function MessagesChatScreen() {
   const { user }: any = useAuth();
   const colorScheme = "dark";
   const theme = Colors[colorScheme];
-
+  const [polling, setPolling] = useState(false);
+  const [pollError, setPollError] = useState(false);
   const [eventData, setEventData] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -67,26 +68,30 @@ export default function MessagesChatScreen() {
   useEffect(() => {
     loadAll();
 
-    // polling every 5s
     pollRef.current = setInterval(async () => {
       try {
+        setPolling(true);
+        setPollError(false);
+
         const msgRes: any[] = (await core_services.getMessagesByEvent(eventId)) || [];
         const formatted = msgRes.map((m) => ({
-          id: m.MessageID || m.id || Math.random().toString(),
+          id: m.MessageID || m.id,
           userId: m.UserId,
           text: m.MessageText,
           time: m.CreatedAt,
         }));
+
         setMessages(formatted);
       } catch (e) {
-        // ignore
+        setPollError(true);
+      } finally {
+        setPolling(false);
       }
     }, 5000);
 
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
+    return () => clearInterval(pollRef.current);
   }, [eventId]);
+
 
   const handleSend = async () => {
     if (!newMessage.trim()) return;
@@ -179,9 +184,30 @@ export default function MessagesChatScreen() {
             style={styles.headerAvatar}
           />
 
-          <Text style={[styles.headerTitle, { color: theme.bg2 }]} numberOfLines={1}>
-            {eventData.EventTitle}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={[styles.headerTitle, { color: theme.bg2 }]} numberOfLines={1}>
+              {eventData.EventTitle}
+            </Text>
+
+            {/* Small loader when polling */}
+            {polling && (
+              <ActivityIndicator
+                size="small"
+                color={theme.bg6}
+                style={{ marginLeft: 8, transform: [{ scale: 0.7 }] }}
+              />
+            )}
+
+            {/* Warning icon on error */}
+            {pollError && (
+              <TouchableOpacity
+                onPress={() => alert("Something went wrong while fetching messages.")}
+                style={{ marginLeft: 8 }}
+              >
+                <Ionicons name="warning-outline" size={18} color="orange" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Placeholder to balance layout */}

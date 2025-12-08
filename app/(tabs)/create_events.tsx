@@ -41,9 +41,10 @@ export default function CreateEventScreen() {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  useEffect(() => {
-    Notifications.requestPermissionsAsync();
-  }, []);
+useEffect(() => {
+  Notifications.requestPermissionsAsync();
+}, []);
+
 
   // Category Dropdown
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
@@ -76,16 +77,17 @@ export default function CreateEventScreen() {
     const lng = pos.coords.longitude;
     setLocationStr(`${lat}, ${lng}`);
   };
-  const triggerSuccessNotification = async () => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Event Created",
-        body: "Your event has been created successfully.",
-        sound: true,
-      },
-      trigger: null,
-    });
-  };
+ const triggerSuccessNotification = async () => {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Event Created",
+      body: "Your event has been created successfully.",
+      sound: "default",
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+    },
+    trigger: null, // fire immediately
+  });
+};
 
 
   const handleCreateEvent = async () => {
