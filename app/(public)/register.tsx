@@ -90,7 +90,7 @@ export default function RegisterScreen() {
 
   return (
     <View style={[styles.wrap, { backgroundColor: theme.bg1 }]}>
-      <Text style={[styles.logo, { color: theme.bg6 }]}>NearMi</Text>
+      <Text style={[styles.logo, { color: theme.bg6 }]}>NearWee</Text>
 
       <View style={styles.form}>
         <TextInput

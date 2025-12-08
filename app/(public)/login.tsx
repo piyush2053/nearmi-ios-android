@@ -29,7 +29,6 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const data = await core_services.loginUser({ email, password });
-      console.log(data, '@@@@@@@@@@')
       const token: string = data?.token || data?.accessToken || "";
 
       if (!token) throw new Error("No token returned from server");
@@ -55,7 +54,7 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.wrap, { backgroundColor: theme.bg1 }]}>
-      <Text style={[styles.logo, { color: theme.bg6 }]}>NearMi</Text>
+      <Text style={[styles.logo, { color: theme.bg6 }]}>NearWee</Text>
 
       <View style={styles.form}>
         <TextInput

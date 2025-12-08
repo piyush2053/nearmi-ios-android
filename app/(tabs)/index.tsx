@@ -1,13 +1,12 @@
-
 import { Colors } from "@/constants/theme";
 import { useGlobalRefresh } from "@/contexts/RefreshContext";
 import { core_services } from "@/services/api";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Dimensions,
+  Animated, Dimensions,
   Image,
   RefreshControl,
   ScrollView,
@@ -154,6 +153,65 @@ export default function HomeScreen() {
   }, [events, searchText, selectedCategory]);
 
   const categories = ["Sports", "Dance", "Music", "Food"];
+  const placeholderOptions = [
+    "Search Nearby 'Dance'",
+    "Search Nearby 'Parties'",
+    "Search Nearby 'Cricket'",
+  ];
+
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [animatedPlaceholder, setAnimatedPlaceholder] = useState(placeholderOptions[0]);
+
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Animate OUT
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 10,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+
+        // Change text
+        setPlaceholderIndex((prev) => {
+          const next = (prev + 1) % placeholderOptions.length;
+          setAnimatedPlaceholder(placeholderOptions[next]);
+          return next;
+        });
+
+        // Reset position
+        translateY.setValue(-10);
+
+        // Animate IN
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+
+
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg1 }]}>
@@ -204,14 +262,37 @@ export default function HomeScreen() {
 
         {/* Search field */}
         <View style={styles.searchWrap}>
+          <Feather
+            name="search"
+            size={18}
+            color={theme.bg2}
+            style={styles.searchIcon}
+          />
+
           <TextInput
             value={searchText}
             onChangeText={setSearchText}
-            placeholder="Search nearby events..."
-            placeholderTextColor={"#bbbbbbc2"}
-            style={[styles.searchInput, { backgroundColor: theme.bg4 }]}
+            style={[
+              styles.searchInput,
+              { backgroundColor: theme.bg4, color: "#fff" }
+            ]}
           />
-          <Feather name="search" size={18} color={theme.bg2} style={styles.searchIcon} />
+
+          {searchText.length === 0 && (
+            <Animated.Text
+              style={{
+                position: "absolute",
+                left: 42,
+                top: 14,
+                fontSize: 17,
+                color: "#ffffffc2",
+                opacity: fadeAnim,
+                transform: [{ translateY }],
+              }}
+            >
+              {animatedPlaceholder}
+            </Animated.Text>
+          )}
         </View>
 
         {/* Events horizontal list */}
@@ -256,12 +337,12 @@ export default function HomeScreen() {
                     activeOpacity={0.85}
                   >
                     <Image source={{ uri: img }} style={styles.eventImage} resizeMode="cover" />
-                    <View style={[styles.eventMeta, { backgroundColor: "rgba(0,0,0,0.45)" }]}>
+                    <View style={[styles.eventMeta, { backgroundColor: "rgba(0, 0, 0, 0.7)" }]}>
                       <Text style={styles.eventTitle} numberOfLines={1}>
                         {event.EventTitle}
                       </Text>
                       <Text style={styles.eventWhen}>{whenText}</Text>
-                      <Text style={styles.eventWhen}>{distText}</Text>
+                      <Text style={styles.eventWhen}><Ionicons name="navigate"></Ionicons> {distText}</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -366,29 +447,31 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "600",
   },
   vibesText: {
-    fontSize: 18,
-    fontWeight: "800",
+    fontSize: 22,
+    fontWeight: "700",
   },
   searchWrap: {
-    marginTop: 12,
+    marginTop: 15,
     position: "relative",
   },
   searchInput: {
     height: 46,
-    borderRadius: 999,
-    paddingLeft: 16,
-    paddingRight: 42,
+    borderRadius: 10,
+    paddingLeft: 42,
+    paddingVertical: 12,
+    paddingRight: 16,
     borderWidth: 1,
-    fontSize: 14,
+    fontSize: 16,
   },
   searchIcon: {
     position: "absolute",
-    right: 14,
-    top: 12,
+    left: 14,
+    top: 14,
+    zIndex: 10,
   },
   hList: {
     marginTop: 8,
@@ -425,7 +508,7 @@ const styles = StyleSheet.create({
   eventTitle: {
     color: "#fff",
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 18,
   },
   eventWhen: {
     color: "#fff",

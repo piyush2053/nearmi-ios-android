@@ -122,7 +122,7 @@ function FloatingAddButton({ onPress }:any) {
           end={{ x: 1, y: 0 }}
           style={styles.floatingButton}
         >
-          <Ionicons name="add" size={26} color="#081638" />
+          <Ionicons name="add" size={26} color="#ffffff83" />
         </LinearGradient>
       </TouchableOpacity>
     </View>
