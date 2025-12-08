@@ -98,22 +98,22 @@ export default function ProfileScreen() {
           </View>
 
           {/* Edit Profile */}
-        <TouchableOpacity
-  style={[styles.editBtn, { backgroundColor: c.bg6 }]}
-  onPress={async () => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Profile Edited",
-        body: "You will receive an email notification shortly",
-        sound: "default", // Plays default notification sound
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-      },
-      trigger: null, // fires immediately
-    });
-  }}
->
-  <Text style={styles.editBtnText}>Edit Profile</Text>
-</TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.editBtn, { backgroundColor: c.bg6 }]}
+            onPress={async () => {
+              await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: "Profile Edited",
+                  body: "You will receive an email notification shortly",
+                  sound: "default", // Plays default notification sound
+                  priority: Notifications.AndroidNotificationPriority.HIGH,
+                },
+                trigger: null, // fires immediately
+              });
+            }}
+          >
+            <Text style={styles.editBtnText}>Edit Profile</Text>
+          </TouchableOpacity>
 
         </View>
       </View>
@@ -152,7 +152,7 @@ export default function ProfileScreen() {
   );
 }
 
-const Stat = ({ number, label }:any) => (
+const Stat = ({ number, label }: any) => (
   <View style={{ alignItems: "center" }}>
     <Text style={styles.statNumber}>{number}</Text>
     <Text style={styles.statLabel}>{label}</Text>
@@ -161,19 +161,19 @@ const Stat = ({ number, label }:any) => (
 
 const Divider = () => <View style={styles.divider} />;
 
-const Badge = ({ count }:any) => (
+const Badge = ({ count }: any) => (
   <View style={styles.badge}>
     <Text style={styles.badgeText}>{count}</Text>
   </View>
 );
 
-const CardIcon = ({ children, color }:any) => (
+const CardIcon = ({ children, color }: any) => (
   <View style={[styles.cardIcon, { backgroundColor: color }]}>
     {children}
   </View>
 );
 
-const ActionButton = ({ label, icon, theme }:any) => (
+const ActionButton = ({ label, icon, theme }: any) => (
   <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.bg4 }]}>
     <View style={styles.actionRow}>
       <View style={[styles.actionIcon, { backgroundColor: theme.bg6 + "33" }]}>

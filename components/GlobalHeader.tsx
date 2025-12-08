@@ -70,7 +70,7 @@ export default function GlobalHeader() {
         <View>
           <View style={styles.row}>
             <Ionicons name="navigate" size={18} color={theme.bg6} />
-            <Text style={[styles.cityText, { color: theme.bg2 }]}>
+            <Text style={[styles.cityText, { color: theme.bg2, fontFamily: "Cereal-Bold" }]}>
               {city}
             </Text>
             <Ionicons
@@ -81,7 +81,7 @@ export default function GlobalHeader() {
             />
           </View>
 
-          <Text style={[styles.addressText, { color: "#bbb" }]} numberOfLines={1}>
+          <Text style={[styles.addressText, { color: "#bbb" , fontFamily: "Cereal-Bold"}]} numberOfLines={1}>
             {address}
           </Text>
         </View>

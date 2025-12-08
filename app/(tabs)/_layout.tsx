@@ -7,10 +7,10 @@ import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function TabsLayout() {
-   const rawScheme = useColorScheme();
-    const colorScheme = rawScheme ?? "dark"; // SAFE fallback
-    const theme = Colors[colorScheme];
-  
+  const rawScheme = useColorScheme();
+  const colorScheme = rawScheme ?? "dark"; // SAFE fallback
+  const theme = Colors[colorScheme];
+
   return (
     <Tabs
       screenOptions={{
@@ -19,7 +19,7 @@ export default function TabsLayout() {
           height: 70,
           paddingBottom: 10,
           paddingTop: 10,
-          backgroundColor: theme.bg1 , // bg1
+          backgroundColor: theme.bg1, // bg1
           borderTopColor: "rgba(0,0,0,0.1)"
         },
         tabBarActiveTintColor: "#29C9FF",
@@ -81,10 +81,14 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
-
-function FloatingAddButton({ onPress }:any) {
+function FloatingAddButton({ onPress }: any) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
+  // NEW: NW animation controls
+  const nwOpacity = useRef(new Animated.Value(0)).current;
+  const nwScale = useRef(new Animated.Value(0.7)).current;
+
+  // Pulsing Glow
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -101,6 +105,54 @@ function FloatingAddButton({ onPress }:any) {
       ])
     ).start();
   }, []);
+  const plusOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = setInterval(() => {
+      // Fade IN NW + Fade OUT Plus
+      Animated.parallel([
+        Animated.timing(nwOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(nwScale, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(plusOpacity, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Fade OUT NW + Fade IN Plus after 3 sec
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(nwOpacity, {
+            toValue: 0,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(nwScale, {
+            toValue: 0.7,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(plusOpacity, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, 3000);
+
+    }, 5000);
+
+    return () => clearInterval(loop);
+  }, []);
 
   return (
     <View style={styles.floatingButtonContainer}>
@@ -114,7 +166,6 @@ function FloatingAddButton({ onPress }:any) {
         ]}
       />
 
-      {/* Gradient Button */}
       <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
         <LinearGradient
           colors={["#0c2050", "#29C9FF"]}
@@ -122,9 +173,28 @@ function FloatingAddButton({ onPress }:any) {
           end={{ x: 1, y: 0 }}
           style={styles.floatingButton}
         >
-          <Ionicons name="add" size={26} color="#ffffff83" />
+          {/* Plus Icon */}
+          <Animated.View style={{ opacity: plusOpacity }}>
+            <Ionicons name="add" size={26} color="#ffffffe1" />
+          </Animated.View>
+
+          {/* NW Animated Text */}
+          <Animated.Text
+            style={{
+              position: "absolute",
+              color: "#FFF",
+              fontFamily: "Cereal-Light",
+              fontSize: 16,
+              fontWeight:700,
+              opacity: nwOpacity,
+              transform: [{ scale: nwScale }],
+            }}
+          >
+            Hey !
+          </Animated.Text>
         </LinearGradient>
       </TouchableOpacity>
+
     </View>
   );
 }
@@ -132,7 +202,7 @@ function FloatingAddButton({ onPress }:any) {
 const styles = StyleSheet.create({
   floatingButtonContainer: {
     position: "absolute",
-    bottom: 5,
+    bottom: 4,
     left: "50%",
     transform: [{ translateX: -29 }], // centers the button perfectly
     alignItems: "center",
@@ -141,8 +211,8 @@ const styles = StyleSheet.create({
 
   glowCircle: {
     position: "absolute",
-    width: 70,
-    height: 70,
+    width: 65,
+    height: 65,
     borderRadius: 35,
     backgroundColor: "rgba(255, 255, 255, 0.18)",
   },
