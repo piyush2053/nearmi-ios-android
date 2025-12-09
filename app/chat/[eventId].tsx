@@ -49,11 +49,15 @@ export default function MessagesChatScreen() {
       // messages
       const msgRes: any[] = (await core_services.getMessagesByEvent(eventId)) || [];
       const formatted = msgRes.map((m) => ({
-        id: m.MessageID || m.id || Math.random().toString(),
+        id:
+          m.MessageID ||
+          m.id ||
+          `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         userId: m.UserId,
         text: m.MessageText,
         time: m.CreatedAt,
       }));
+
       setMessages(formatted);
 
       // mark lastSeen now (so unread resets)
@@ -75,7 +79,10 @@ export default function MessagesChatScreen() {
 
         const msgRes: any[] = (await core_services.getMessagesByEvent(eventId)) || [];
         const formatted = msgRes.map((m) => ({
-          id: m.MessageID || m.id,
+          id:
+            m.MessageID ||
+            m.id ||
+            `${Date.now()}-${Math.random().toString(36).slice(2)}`, // UNIQUE fallback
           userId: m.UserId,
           text: m.MessageText,
           time: m.CreatedAt,
@@ -107,7 +114,7 @@ export default function MessagesChatScreen() {
       setMessages((prev) => [
         ...prev,
         {
-          id: Math.random().toString(),
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           userId: user?.userId || user?.id,
           text: newMessage.trim(),
           time: new Date().toISOString(),
@@ -126,25 +133,62 @@ export default function MessagesChatScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: any }) => {
-    const isAdmin = item.userId === eventData?.UserId;
+  const renderItem = ({ item, index }: { item: any; index: number }) => {
     const mine = item.userId === (user?.userId || user?.id);
+
+    // Previous message date
+    const prev = messages[index - 1];
+    const showDate =
+      index === 0 ||
+      format(new Date(prev.time), "yyyy-MM-dd") !== format(new Date(item.time), "yyyy-MM-dd");
+
     return (
-      <View style={{ marginVertical: 6, alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "80%" }}>
+      <>
+        {showDate && (
+          <View style={styles.dateSeparator}>
+            <Text style={styles.dateSeparatorText}>{getDayLabel(item.time)}</Text>
+          </View>
+        )}
+
         <View
-          style={[
-            styles.bubble,
-            mine ? { backgroundColor: theme.bg6, alignSelf: "flex-end" } : { backgroundColor: theme.bg4, alignSelf: "flex-start" },
-          ]}
+          style={{
+            marginVertical: 6,
+            alignSelf: mine ? "flex-end" : "flex-start",
+            maxWidth: "82%",
+            paddingHorizontal: 4,
+          }}
         >
-          <Text style={{ color: mine ? "#081638" : "#fff" }}>{item.text}</Text>
+          <View
+            style={[
+              styles.bubble,
+              mine
+                ? { backgroundColor: theme.bg6, alignSelf: "flex-end" }
+                : { backgroundColor: theme.bg4, alignSelf: "flex-start" },
+            ]}
+          >
+            <Text
+              style={[
+                styles.bubbleText,
+                { color: mine ? "#081638" : "#fff" }
+              ]}
+            >
+              {item.text}
+            </Text>
+          </View>
+
+          <Text
+            style={[
+              styles.timeText,
+              { textAlign: mine ? "right" : "left" }
+            ]}
+          >
+            {format(new Date(item.time), "hh:mm aa")}
+          </Text>
         </View>
-        <Text style={{ fontSize: 11, color: "#bbb", marginTop: 4, textAlign: mine ? "right" : "left" }}>
-          {format(new Date(item.time), "hh:mm aa")}
-        </Text>
-      </View>
+      </>
     );
   };
+
 
   if (loading) {
     return (
@@ -166,88 +210,105 @@ export default function MessagesChatScreen() {
   }
 
   const isAdmin = eventData.UserId === (user?.userId || user?.id);
+  const getDayLabel = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    if (isToday) return "Today";
+    if (isYesterday) return "Yesterday";
+
+    return format(date, "dd MMM yyyy");
+  };
 
   return (
-    <KeyboardAvoidingView style={[styles.container, { backgroundColor: theme.bg1 }]} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={80}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.bg1 }]}>
-
-        {/* Back Button */}
-        <TouchableOpacity onPress={() => router.back()} style={{ paddingRight: 10 }}>
-          <Ionicons name="arrow-back" size={22} color={theme.bg2} />
-        </TouchableOpacity>
-
-        {/* Group Icon + Title */}
-        <View style={styles.headerInfo}>
-          <Image
-            source={{ uri: "https://cdn-icons-png.flaticon.com/512/12886/12886428.png" }}
-            style={styles.headerAvatar}
-          />
-
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={[styles.headerTitle, { color: theme.bg2 }]} numberOfLines={1}>
-              {eventData.EventTitle}
-            </Text>
-
-            {/* Small loader when polling */}
-            {polling && (
-              <ActivityIndicator
-                size="small"
-                color={theme.bg6}
-                style={{ marginLeft: 8, transform: [{ scale: 0.7 }] }}
-              />
-            )}
-
-            {/* Warning icon on error */}
-            {pollError && (
-              <TouchableOpacity
-                onPress={() => alert("Something went wrong while fetching messages.")}
-                style={{ marginLeft: 8 }}
-              >
-                <Ionicons name="warning-outline" size={18} color="orange" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Placeholder to balance layout */}
-        <View style={{ width: 32 }} />
-      </View>
-
-      {/* Messages */}
-      <FlatList
-        ref={flatRef}
-        data={messages}
-        keyExtractor={(m) => m.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ padding: 12, paddingBottom: 20 }}
-      />
-
-      {/* Input area */}
-      <View style={[styles.inputWrap, { backgroundColor: theme.bg1 }]}>
-        {isAdmin ? (
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-            <TextInput
-              value={newMessage}
-              onChangeText={setNewMessage}
-              placeholder="Type a message..."
-              placeholderTextColor="#aaa"
-              style={[styles.input, { backgroundColor: theme.bg4, color: theme.bg2 }]}
-              onSubmitEditing={handleSend}
-              returnKeyType="send"
+    <View style={{ flex: 1, backgroundColor: theme.bg1 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 135 : 0}
+      >
+        <View style={[styles.header, { backgroundColor: theme.bg1 }]}>
+          <TouchableOpacity onPress={() => router.back()} style={{ paddingRight: 10 }}>
+            <Ionicons name="arrow-back" size={22} color={theme.bg2} />
+          </TouchableOpacity>
+          <View style={styles.headerInfo}>
+            <Image
+              source={{ uri: "https://cdn-icons-png.flaticon.com/512/12886/12886428.png" }}
+              style={styles.headerAvatar}
             />
 
-            <TouchableOpacity onPress={handleSend} style={[styles.sendBtn, { backgroundColor: theme.bg6 }]} disabled={sending}>
-              {sending ? <ActivityIndicator color={theme.bg1} /> : <Ionicons name="send" size={18} color={theme.bg1} />}
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={[styles.headerTitle, { color: theme.bg2 }]} numberOfLines={1}>
+                {eventData.EventTitle}
+              </Text>
+
+              {/* Small loader when polling */}
+              {polling && (
+                <ActivityIndicator
+                  size="small"
+                  color={theme.bg6}
+                  style={{ marginLeft: 8, transform: [{ scale: 0.7 }] }}
+                />
+              )}
+
+              {/* Warning icon on error */}
+              {pollError && (
+                <TouchableOpacity
+                  onPress={() => alert("Something went wrong while fetching messages.")}
+                  style={{ marginLeft: 8 }}
+                >
+                  <Ionicons name="warning-outline" size={18} color="orange" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        ) : (
-          <View style={{ padding: 12 }}>
-            <Text style={{ color: "#bbb", textAlign: "center" }}>Only admin can send messages.</Text>
-          </View>
-        )}
-      </View>
-    </KeyboardAvoidingView>
+
+          {/* Placeholder to balance layout */}
+          <View style={{ width: 32 }} />
+        </View>
+
+        {/* Messages */}
+        <FlatList
+          ref={flatRef}
+          data={messages}
+          keyExtractor={(m, index) => m.id?.toString() ?? `msg-${index}`}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 20 }}
+          keyboardShouldPersistTaps="handled"
+
+        />
+
+        {/* Input area */}
+        <View style={[styles.inputWrap, { backgroundColor: theme.bg1 }]}>
+          {isAdmin ? (
+            <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+              <TextInput
+                value={newMessage}
+                onChangeText={setNewMessage}
+                placeholder="Type a message..."
+                placeholderTextColor="#aaa"
+                style={[styles.input, { backgroundColor: theme.bg4, color: theme.bg2 }]}
+                onSubmitEditing={handleSend}
+                returnKeyType="send"
+              />
+
+              <TouchableOpacity onPress={handleSend} style={[styles.sendBtn, { backgroundColor: theme.bg6 }]} disabled={sending}>
+                {sending ? <ActivityIndicator color={theme.bg1} /> : <Ionicons name="send" size={18} color={theme.bg1} />}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ padding: 12 }}>
+              <Text style={{ color: "#bbb", textAlign: "center" }}>Only admin can send messages.</Text>
+            </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -263,26 +324,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  headerTitle: { fontSize: 18, fontWeight: "700" },
-
-  bubble: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-  },
 
   inputWrap: {
-    padding: 12,
-    marginBottom: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 12,
     borderTopWidth: 0,
-  },
+    backgroundColor: "#020a1eff",
+  }
+  ,
   input: {
     flex: 1,
-    height: 44,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    fontSize: 14,
+    height: 46,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    fontFamily: "Cereal-Regular",
   },
+
   sendBtn: {
     marginLeft: 8,
     width: 44,
@@ -303,6 +362,44 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     marginRight: 10,
     backgroundColor: "#444",
+  },
+  bubble: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    fontFamily: "Cereal-Regular",
+  },
+
+  bubbleText: {
+    fontSize: 15,
+    fontFamily: "Cereal-Regular",
+  },
+
+  timeText: {
+    fontSize: 11,
+    color: "#bbb",
+    marginTop: 4,
+    fontFamily: "Cereal-Light",
+  },
+
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: "Cereal-Medium",
+    fontWeight: "600",
+  },
+  dateSeparator: {
+    alignSelf: "center",
+    backgroundColor: "#1f2a40",
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginVertical: 3,
+  },
+
+  dateSeparatorText: {
+    color: "#fff",
+    fontSize: 12,
+    fontFamily: "Cereal-Regular",
   },
 
 });

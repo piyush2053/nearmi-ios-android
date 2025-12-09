@@ -54,8 +54,23 @@ function NavigationGate() {
   const segments = useSegments();
   const router = useRouter();
 
+  // useEffect(() => {
+  //   if (loading) return;
+
+  //   const inPublic = segments[0] === "(public)";
+
+  //   if (!isAuthenticated) {
+  //     if (!inPublic) router.replace("/(public)/login");
+  //   } else {
+  //     if (inPublic) router.replace("/(tabs)");
+  //   }
+  // }, [isAuthenticated, loading, segments]);  //workign wala auth hai agr kuch issue aaya toh wapis uncommeted kardeneg 
+
   useEffect(() => {
     if (loading) return;
+
+    const isLoadingScreen = segments[1] === "loading";
+    if (isLoadingScreen) return; // stop redirects during loading screen
 
     const inPublic = segments[0] === "(public)";
 
@@ -66,10 +81,11 @@ function NavigationGate() {
     }
   }, [isAuthenticated, loading, segments]);
 
+
   return (
     <RefreshProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        
+
         {/* TOP SAFE AREA + HEADER */}
         <SafeAreaView style={[styles.safeTop, { backgroundColor: theme.bg7 }]} edges={["top"]}>
           <GlobalHeader />
@@ -77,7 +93,7 @@ function NavigationGate() {
 
         {/* MAIN CONTENT */}
         <View style={{ flex: 1, backgroundColor: theme.bg7 }}>
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack screenOptions={{ headerShown: false }} initialRouteName="(public)/loading" >
             <Stack.Screen name="(public)" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />

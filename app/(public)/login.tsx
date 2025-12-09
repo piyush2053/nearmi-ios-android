@@ -81,7 +81,7 @@ export default function LoginScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/(public)/register")} style={{ marginTop: 12 }}>
-          <Text style={{ color: "#bbb" }}>Don't have an account? Register</Text>
+          <Text style={{ color: "#bbb", textAlign: 'center' }}>Don't have an account? Register</Text>
         </TouchableOpacity>
       </View>
     </View>

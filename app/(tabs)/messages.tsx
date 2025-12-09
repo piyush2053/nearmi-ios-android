@@ -8,7 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { format } from "date-fns";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Animated,
@@ -16,6 +16,7 @@ import {
     RefreshControl,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View
 } from "react-native";
@@ -39,7 +40,60 @@ export default function MessagesWrapper() {
     const [confirmVisible, setConfirmVisible] = useState(false);
     const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
+    const [searchText, setSearchText] = useState("");
 
+    // Animated placeholder (same as Home screen)
+    const placeholderOptions = [
+        "Search chats...",
+        "Search groups...",
+        "Search messages...",
+    ];
+
+    const [placeholderIndex, setPlaceholderIndex] = useState(0);
+    const [animatedPlaceholder, setAnimatedPlaceholder] = useState(placeholderOptions[0]);
+
+    const fadeAnim = useRef(new Animated.Value(1)).current;
+    const translateY = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 250,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(translateY, {
+                    toValue: 10,
+                    duration: 250,
+                    useNativeDriver: true,
+                }),
+            ]).start(() => {
+                setPlaceholderIndex((prev) => {
+                    const next = (prev + 1) % placeholderOptions.length;
+                    setAnimatedPlaceholder(placeholderOptions[next]);
+                    return next;
+                });
+
+                translateY.setValue(-10);
+
+                Animated.parallel([
+                    Animated.timing(fadeAnim, {
+                        toValue: 1,
+                        duration: 250,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(translateY, {
+                        toValue: 0,
+                        duration: 250,
+                        useNativeDriver: true,
+                    }),
+                ]).start();
+            });
+        }, 4500);
+
+        return () => clearInterval(interval);
+    }, []);
     useEffect(() => {
         AsyncStorage.getItem("tipShown").then((v) => {
             if (!v) {
@@ -192,12 +246,12 @@ export default function MessagesWrapper() {
                 style={[
                     styles.row,
                     {
-                        backgroundColor:
-                            activeItem === String(event.EventID || event.id)
-                                ? "#333"
-                                : theme.bg4
-                    }
+                        backgroundColor: activeItem === String(event.EventID || event.id) ? theme.bg7 : theme.bg1,
+                        borderBottomWidth: 0.4,
+                        borderBottomColor: "#444", // thin WhatsApp-like divider
+                    },
                 ]}
+
                 onPress={() => {
                     router.push({
                         pathname: "/chat/[eventId]",
@@ -266,9 +320,16 @@ export default function MessagesWrapper() {
                         </View>
 
                         {/* INFO (disabled) */}
-                        <View style={[styles.actionBtn, { backgroundColor: "#555", opacity: 0.5 }]}>
-                            <Ionicons name="information-circle" size={21} color={'#fff'}></Ionicons>
-                        </View>
+                        <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: "#555", opacity: 0.5 }]}
+                            onPress={() => {
+                                // undo long press action
+                                setActiveItem(null);
+                            }}
+                        >
+                            <Ionicons name="ban" size={21} color={'#fff'} />
+                        </TouchableOpacity>
+
 
                     </View>
                 )}
@@ -296,6 +357,10 @@ export default function MessagesWrapper() {
             </View>
         );
     }
+    const filteredItems = items.filter((item) => {
+        const title = item.event.EventTitle || item.event.title || "";
+        return title.toLowerCase().includes(searchText.toLowerCase());
+    });
 
     return (
         <View style={[styles.container, { backgroundColor: theme.bg1 }]}>
@@ -315,8 +380,43 @@ export default function MessagesWrapper() {
                     </Text>
                 </Animated.View>
             )}
+            <View style={{ paddingHorizontal: 12, marginTop: 10 }}>
+                <View style={{ position: "relative" }}>
+                    <Ionicons
+                        name="search"
+                        size={18}
+                        color={theme.bg2}
+                        style={{ position: "absolute", left: 14, top: 14, zIndex: 10 }}
+                    />
+
+                    <TextInput
+                        value={searchText}
+                        onChangeText={setSearchText}
+                        style={[
+                            styles.searchInput,
+                            { backgroundColor: theme.bg4, borderColor: theme.bg4, color: "#fff" },
+                        ]}
+                    />
+
+                    {searchText.length === 0 && (
+                        <Animated.Text
+                            style={{
+                                position: "absolute",
+                                left: 42,
+                                top: 13,
+                                fontSize: 16,
+                                color: "#ffffffa6",
+                                opacity: fadeAnim,
+                                transform: [{ translateY }],
+                            }}
+                        >
+                            {animatedPlaceholder}
+                        </Animated.Text>
+                    )}
+                </View>
+            </View>
             <FlatList
-                data={items}
+                data={filteredItems}
                 keyExtractor={(it) => String(it.event.EventID || it.event.id)}
                 renderItem={renderItem}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.bg6} />}
@@ -346,22 +446,21 @@ export default function MessagesWrapper() {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
-
     row: {
         flexDirection: "row",
-        padding: 12,
-        borderRadius: 12,
-        marginBottom: 10,
+        paddingVertical: 14,
+        paddingHorizontal: 12,
         alignItems: "center",
     },
     avatar: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        alignItems: "center",
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         justifyContent: "center",
+        alignItems: "center",
         marginRight: 12,
     },
+
     meta: { flex: 1 },
     rowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     title: { fontSize: 16, fontWeight: "700" },
@@ -450,6 +549,15 @@ const styles = StyleSheet.create({
         color: "#020f2cff",
         fontSize: 14,
         fontWeight: "600",
+    },
+    searchInput: {
+        height: 46,
+        borderRadius: 10,
+        paddingLeft: 42,
+        paddingVertical: 12,
+        paddingRight: 16,
+        borderWidth: 1,
+        fontSize: 16,
     },
 
 });
