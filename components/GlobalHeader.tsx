@@ -26,6 +26,32 @@ export default function GlobalHeader() {
   const [city, setCity] = useState("Locating...");
   const [address, setAddress] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const refreshLocation = async () => {
+    try {
+      setCity("Updating...");
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setCity("Unknown");
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({});
+      const g = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+
+      if (g?.length) {
+        const place = g[0];
+        setCity(place.city || place.name || place.district || "Unknown");
+        setAddress(
+          `${place.name || ""}, ${place.postalCode || ""} ${place.city || ""}`
+        );
+      }
+    } catch (error) {
+      setCity("Unknown");
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -73,15 +99,19 @@ export default function GlobalHeader() {
             <Text style={[styles.cityText, { color: theme.bg2, fontFamily: "Cereal-Bold" }]}>
               {city}
             </Text>
-            <Ionicons
-              name="chevron-down"
-              size={16}
-              color={theme.bg2}
-              style={{ marginLeft: 2 }}
-            />
+
+            <TouchableOpacity onPress={refreshLocation}>
+              <Ionicons
+                name="chevron-down"
+                size={16}
+                color={theme.bg2}
+                style={{ marginLeft: 2 }}
+              />
+            </TouchableOpacity>
+
           </View>
 
-          <Text style={[styles.addressText, { color: "#bbb" , fontFamily: "Cereal-Bold"}]} numberOfLines={1}>
+          <Text style={[styles.addressText, { color: "#bbb", fontFamily: "Cereal-Bold" }]} numberOfLines={1}>
             {address}
           </Text>
         </View>
@@ -130,7 +160,7 @@ const styles = StyleSheet.create({
   },
 
   cityText: {
-    fontSize:20,
+    fontSize: 20,
     fontWeight: "700",
     marginLeft: 4,
   },

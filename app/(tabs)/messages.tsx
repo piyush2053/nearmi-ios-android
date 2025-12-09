@@ -1,4 +1,5 @@
 // app/(tabs)/messages/index.tsx
+import DeleteConfirm from "@/components/DeleteConfirm";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { core_services } from "@/services/api";
@@ -254,6 +255,7 @@ export default function MessagesWrapper() {
                                 setConfirmVisible(true);
                             }}
 
+
                         >
                             <Ionicons name="trash" size={21} color={'#fff'}></Ionicons>
                         </TouchableOpacity>
@@ -320,49 +322,22 @@ export default function MessagesWrapper() {
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.bg6} />}
                 contentContainerStyle={{ padding: 12 }}
             />
-            {confirmVisible && (
-                <View style={styles.popupOverlay}>
-                    <Animated.View style={styles.popupBox}>
 
-                        <Text style={styles.popupTitle}>Are you sure?</Text>
-
-                        <Text style={styles.popupDesc}>
-                            By deleting this event you may lose all chats, connections, discussions, event data, and more.
-                        </Text>
-
-                        <View style={styles.popupButtons}>
-
-                            {/* NO BUTTON */}
-                            <TouchableOpacity
-                                style={[styles.popupBtn, { backgroundColor: theme.bg3 }]}
-                                onPress={() => {
-                                    setConfirmVisible(false);
-                                    setPendingDeleteId(null);
-                                }}
-                            >
-                                <Text style={styles.popupBtnText}>No</Text>
-                            </TouchableOpacity>
-
-                            {/* YES BUTTON */}
-                            <TouchableOpacity
-                                style={[styles.popupBtn, { backgroundColor: theme.bg6 }]}
-                                onPress={async () => {
-                                    if (pendingDeleteId) {
-                                        await handleDeleteEvent(pendingDeleteId);
-                                    }
-                                    setConfirmVisible(false);
-                                    setPendingDeleteId(null);
-                                    setActiveItem(null);
-                                }}
-                            >
-                                <Text style={styles.popupBtnTextYes}>Yes</Text>
-                            </TouchableOpacity>
-
-                        </View>
-
-                    </Animated.View>
-                </View>
-            )}
+            <DeleteConfirm
+                visible={confirmVisible}
+                onClose={() => {
+                    setConfirmVisible(false);
+                    setPendingDeleteId(null);
+                }}
+                onConfirm={async () => {
+                    if (pendingDeleteId) {
+                        await handleDeleteEvent(pendingDeleteId);
+                    }
+                    setConfirmVisible(false);
+                    setPendingDeleteId(null);
+                    setActiveItem(null);
+                }}
+            />
 
         </View>
     );
