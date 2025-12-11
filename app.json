@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "nearmi",
-    "slug": "nearmi",
+    "name": "nearwe",
+    "slug": "nearwe",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "nearmi",
+    "icon": "./assets/images/logo.png",
+    "scheme": "nearwe",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pp2053.nearmi",
+      "bundleIdentifier": "com.pp2053.nearwe",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -22,13 +22,13 @@
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/logo-removebg.png",
+        "backgroundImage": "./assets/images/logo-removebg.png",
+        "monochromeImage": "./assets/images/logo-removebg.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.pp2053.nearmi"
+      "package": "com.pp2053.nearwe"
     },
     "web": {
       "output": "static",
@@ -39,7 +39,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon.png",
+          "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -51,7 +51,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
+          "icon": "./assets/images/logo.png",
           "color": "#ffffff"
         }
       ],
