@@ -17,46 +17,45 @@ import {
   useColorScheme,
   View
 } from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 const { width: SCREEN_W } = Dimensions.get("window");
+const darkMapStyle = [
+  { elementType: "geometry", stylers: [{ color: "#1A1A1A" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#1A1A1A" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#e0e0e0" }] },
 
-// Hardcoded hosted venues (you provided)
-const hostedVenues = [
   {
-    id: 101,
-    name: "Carlton Banquet Hall",
-    desc: "Luxury indoor hall",
-    img: "https://assets.simpleviewinc.com/sv-visit-irving/image/upload/c_limit,h_1200,q_75,w_1200/v1/cms_resources/clients/irving-redesign/Events_Page_Header_2903ed9c-40c1-4f6c-9a69-70bb8415295b.jpg",
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [{ color: "#222" }],
   },
   {
-    id: 102,
-    name: "Green Turf Ground",
-    desc: "Cricket Box - Turf",
-    img: "https://assets.simpleviewinc.com/sv-visit-irving/image/upload/c_limit,h_1200,q_75,w_1200/v1/cms_resources/clients/irving-redesign/Events_Page_Header_2903ed9c-40c1-4f6c-9a69-70bb8415295b.jpg",
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#aaaaaa" }],
+  },
+
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#0F1115" }],
+  },
+
+  {
+    featureType: "transit",
+    stylers: [{ visibility: "off" }],
+  },
+
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#2C2C2C" }],
   },
   {
-    id: 103,
-    name: "Blue Lagoon Resort",
-    desc: "Pool + Party venue",
-    img: "https://assets.simpleviewinc.com/sv-visit-irving/image/upload/c_limit,h_1200,q_75,w_1200/v1/cms_resources/clients/irving-redesign/Events_Page_Header_2903ed9c-40c1-4f6c-9a69-70bb8415295b.jpg",
-  },
-  {
-    id: 104,
-    name: "The Roof Deck",
-    desc: "Open sky cafe event space",
-    img: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80",
-  },
-  {
-    id: 105,
-    name: "Bhukkad Dhabha",
-    desc: "Dinner with Strangers",
-    img: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80",
-  },
-  {
-    id: 106,
-    name: "Skyline",
-    desc: "Open sky cafe event space",
-    img: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80",
+    featureType: "road",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#8a8a8a" }],
   },
 ];
 
@@ -71,6 +70,9 @@ export default function HomeScreen() {
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationEnabled, setLocationEnabled] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const mapRef = useRef<MapView | null>(null);
+
 
   // Fetch events
   useEffect(() => {
@@ -211,6 +213,21 @@ export default function HomeScreen() {
   }, []);
 
 
+  const focusMarker = (index:any) => {
+    if (!filteredEvents[index]) return;
+
+    const [lat, lon] = filteredEvents[index].Location.split(",").map(Number);
+
+    mapRef.current?.animateToRegion(
+      {
+        latitude: lat,
+        longitude: lon,
+        latitudeDelta: 0.001,
+        longitudeDelta: 0.001,
+      },
+      600 // animation ms
+    );
+  };
 
 
   return (
@@ -242,6 +259,174 @@ export default function HomeScreen() {
         </View>
       )}
 
+      {userCoords && (
+        <MapView
+          ref={mapRef}
+          provider={PROVIDER_GOOGLE}
+          style={{ width: "100%", height: 260, borderRadius: 16 }}
+          customMapStyle={darkMapStyle}
+          initialRegion={{
+            latitude: userCoords.lat,
+            longitude: userCoords.lon,
+            latitudeDelta: 0.0009,
+            longitudeDelta: 0.0009,
+          }}
+
+        >
+          {/* Left Navigation Button */}
+          <TouchableOpacity
+            onPress={() => {
+              const next = currentIndex - 1 >= 0 ? currentIndex - 1 : filteredEvents.length - 1;
+              setCurrentIndex(next);
+              focusMarker(next);
+            }}
+            style={{
+              position: "absolute",
+              bottom: 20,
+              left: 20,
+              backgroundColor: theme.bg1,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              justifyContent: "center",
+              alignItems: "center",
+              shadowOpacity: 0.3,
+              shadowRadius: 5,
+              elevation: 8,
+            }}
+          >
+            <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800" }}><Ionicons name="arrow-back" size={20}></Ionicons></Text>
+          </TouchableOpacity>
+
+
+          {/* Right Navigation Button */}
+          <TouchableOpacity
+            onPress={() => {
+              const next = currentIndex + 1 < filteredEvents.length ? currentIndex + 1 : 0;
+              setCurrentIndex(next);
+              focusMarker(next);
+            }}
+            style={{
+              position: "absolute",
+              bottom: 20,
+              right: 20,
+              backgroundColor: theme.bg1,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              justifyContent: "center",
+              alignItems: "center",
+              shadowOpacity: 0.3,
+              shadowRadius: 5,
+              elevation: 8,
+            }}
+          >
+            <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800" }}><Ionicons name="arrow-forward" size={20}></Ionicons></Text>
+          </TouchableOpacity>
+
+
+          {/* USER BLUE MARKER */}
+          <Marker
+            coordinate={{
+              latitude: userCoords.lat,
+              longitude: userCoords.lon,
+            }}
+            anchor={{ x: 0.5, y: 1 }}
+          >
+            {/* Blue pin */}
+            <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: "blue",
+                  borderWidth: 2,
+                  borderColor: "#fff",
+                }}
+              />
+
+              {/* Always visible tooltip */}
+              <View
+                style={{
+                  marginTop: 6,
+                  backgroundColor: theme.bg1,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 8,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.25,
+                  shadowRadius: 4,
+                  elevation: 6,
+                }}
+              >
+                <Text style={{ color: "#fff", fontSize: 10, fontWeight: "600" }}>
+                  You are here
+                </Text>
+              </View>
+            </View>
+          </Marker>
+
+
+          {/* EVENT MARKERS */}
+          {events.map((ev) => {
+            const [lat, lon] = (ev.Location || "").split(",").map(Number);
+            if (!lat || !lon) return null;
+
+            return (
+              <Marker
+                key={ev.EventID}
+                coordinate={{ latitude: lat, longitude: lon }}
+                anchor={{ x: 0.5, y: 1 }}
+              >
+                <TouchableOpacity
+                  onPress={() => router.push(`/event_details?id=${ev.EventID}`)}
+                  activeOpacity={0.9}
+                  style={{ alignItems: "center" }}
+                >
+                  {/* Pin dot */}
+                  <View
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: 6,
+                      backgroundColor: theme.bg7,
+                      borderWidth: 2,
+                      borderColor: "#fff",
+                    }}
+                  />
+                  <View
+                    style={{
+                      marginTop: 6,
+                      backgroundColor: theme.bg1,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 12,
+                      borderColor: theme.bg6,
+                      shadowOpacity: 0.3,
+                      shadowRadius: 5,
+                      elevation: 6,
+                      borderWidth: 0.3,
+                      maxWidth: 160,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }} numberOfLines={1}>
+                      {ev.EventTitle}
+                    </Text>
+
+                    <Text style={{ color: "#ffffffb5", fontSize: 10, marginTop: 2 }}>
+                      {calculateDistance(userCoords.lat, userCoords.lon, lat, lon)} km away
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Marker>
+            );
+          })}
+
+
+        </MapView>
+      )}
       <ScrollView
         contentContainerStyle={styles.main}
         showsVerticalScrollIndicator={false}
@@ -390,23 +575,6 @@ export default function HomeScreen() {
                 );
               })}
             </View>
-          </ScrollView>
-        </View>
-
-
-        {/* Hosted Venues (hardcoded display simplified) */}
-        <View style={{ marginTop: 20 }}>
-          <Text style={[styles.sectionLabel, { color: theme.bg2, marginBottom: 8 }]}>Hosted Venues</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hList}>
-            {hostedVenues.slice(0, 3).map((v) => (
-              <View key={v.id} style={[styles.venueCard, { backgroundColor: theme.bg4 }]}>
-                <Image source={{ uri: v.img }} style={styles.venueImg} />
-                <Text style={[styles.venueName, { color: theme.bg2 }]} numberOfLines={1}>
-                  {v.name}
-                </Text>
-                <Text style={{ color: "#bbb", fontSize: 12 }}>{v.desc}</Text>
-              </View>
-            ))}
           </ScrollView>
         </View>
       </ScrollView>
@@ -592,5 +760,37 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     padding: 4,
   },
+  mapCardsContainer: {
+    position: "absolute",
+    top: 12,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingLeft: 20,
+    paddingRight: 20,
+    zIndex: 20,
+  },
 
+  mapCard: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    marginRight: 12,
+    width: 180,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+
+  mapCardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  mapCardSub: {
+    fontSize: 12,
+    marginTop: 4,
+  },
 });
