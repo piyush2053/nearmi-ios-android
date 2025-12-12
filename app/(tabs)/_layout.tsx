@@ -183,9 +183,9 @@ function FloatingAddButton({ onPress }: any) {
             style={{
               position: "absolute",
               color: "#FFF",
-              fontFamily: "Cereal-Light",
+              fontFamily: "Cereal-regular",
               fontSize: 16,
-              fontWeight:700,
+              fontWeight:400,
               opacity: nwOpacity,
               transform: [{ scale: nwScale }],
             }}

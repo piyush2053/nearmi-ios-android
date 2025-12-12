@@ -18,6 +18,7 @@ import {
   View
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+const gif_placeholder = require("../../assets/gifs/pl1.gif");
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const darkMapStyle = [
@@ -261,20 +262,119 @@ export default function HomeScreen() {
 
       {userCoords && (
         <View style={{ width: "100%", alignItems: "center", marginTop: 10 }}>
-          <MapView
-            ref={mapRef}
-            provider={PROVIDER_GOOGLE}
-            style={{ width: "95%", height: 260, borderRadius: 16 }}
-            customMapStyle={darkMapStyle}
-            initialRegion={{
-              latitude: userCoords.lat,
-              longitude: userCoords.lon,
-              latitudeDelta: 0.0009,
-              longitudeDelta: 0.0009,
-            }}
+          {/* Container with relative position for absolute buttons */}
+          <View style={{ width: "95%", position: "relative" }}>
+            <MapView
+              ref={mapRef}
+              provider={PROVIDER_GOOGLE}
+              style={{ width: "100%", height: 260, borderRadius: 16 }}
+              customMapStyle={darkMapStyle}
+              initialRegion={{
+                latitude: userCoords.lat,
+                longitude: userCoords.lon,
+                latitudeDelta: 0.0009,
+                longitudeDelta: 0.0009,
+              }}
+            >
+              {/* USER BLUE MARKER */}
+              <Marker
+                coordinate={{
+                  latitude: userCoords.lat,
+                  longitude: userCoords.lon,
+                }}
+                anchor={{ x: 0.5, y: 1 }}
+              >
+                <View style={{ alignItems: "center" }}>
+                  <View
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: 6,
+                      backgroundColor: "blue",
+                      borderWidth: 2,
+                      borderColor: "#fff",
+                    }}
+                  />
+                  <View
+                    style={{
+                      marginTop: 6,
+                      backgroundColor: theme.bg1,
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 8,
+                      shadowColor: "#000",
+                      shadowOpacity: 0.25,
+                      shadowRadius: 4,
+                      elevation: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 10, fontWeight: "600" }}>
+                      You are here
+                    </Text>
+                  </View>
+                </View>
+              </Marker>
 
-          >
-            {/* Left Navigation Button */}
+              {/* EVENT MARKERS */}
+              {events.map((ev) => {
+                const [lat, lon] = (ev.Location || "").split(",").map(Number);
+                if (!lat || !lon) return null;
+
+                return (
+                  <Marker
+                    key={ev.EventID}
+                    coordinate={{ latitude: lat, longitude: lon }}
+                    anchor={{ x: 0.5, y: 1 }}
+                    onPress={() => router.push(`/event_details?id=${ev.EventID}`)}
+                    tracksViewChanges={false}
+                  >
+                    <View style={{ alignItems: "center" }}>
+                      <TouchableOpacity
+                        onPress={() => router.push(`/event_details?id=${ev.EventID}`)}
+                        activeOpacity={0.9}
+                        style={{ alignItems: "center" }}
+                      >
+                        <View
+                          style={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: 6,
+                            backgroundColor: theme.bg7,
+                            borderWidth: 2,
+                            borderColor: "#fff",
+                          }}
+                        />
+                        <View
+                          style={{
+                            marginTop: 6,
+                            backgroundColor: theme.bg1,
+                            paddingHorizontal: 10,
+                            paddingVertical: 6,
+                            borderRadius: 12,
+                            borderColor: theme.bg6,
+                            shadowOpacity: 0.3,
+                            shadowRadius: 5,
+                            elevation: 6,
+                            borderWidth: 0.3,
+                            maxWidth: 160,
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }} numberOfLines={1}>
+                            {ev.EventTitle}
+                          </Text>
+                          <Text style={{ color: "#ffffffb5", fontSize: 10, marginTop: 2 }}>
+                            {calculateDistance(userCoords.lat, userCoords.lon, lat, lon)} km away
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  </Marker>
+                );
+              })}
+            </MapView>
+
+            {/* Left Navigation Button - NOW OUTSIDE MapView */}
             <TouchableOpacity
               onPress={() => {
                 const next = currentIndex - 1 >= 0 ? currentIndex - 1 : filteredEvents.length - 1;
@@ -283,7 +383,7 @@ export default function HomeScreen() {
               }}
               style={{
                 position: "absolute",
-                bottom: 20,
+                bottom: 5, // Adjusted to be above the bottom bar
                 left: 20,
                 backgroundColor: theme.bg1,
                 width: 40,
@@ -294,13 +394,13 @@ export default function HomeScreen() {
                 shadowOpacity: 0.3,
                 shadowRadius: 5,
                 elevation: 8,
+                zIndex: 9999
               }}
             >
-              <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800" }}><Ionicons name="arrow-back" size={20}></Ionicons></Text>
+              <Ionicons name="arrow-back" size={20} color="#fff" />
             </TouchableOpacity>
 
-
-            {/* Right Navigation Button */}
+            {/* Right Navigation Button - NOW OUTSIDE MapView */}
             <TouchableOpacity
               onPress={() => {
                 const next = currentIndex + 1 < filteredEvents.length ? currentIndex + 1 : 0;
@@ -309,7 +409,7 @@ export default function HomeScreen() {
               }}
               style={{
                 position: "absolute",
-                bottom: 20,
+                bottom: 5, // Adjusted to be above the bottom bar
                 right: 20,
                 backgroundColor: theme.bg1,
                 width: 40,
@@ -320,116 +420,25 @@ export default function HomeScreen() {
                 shadowOpacity: 0.3,
                 shadowRadius: 5,
                 elevation: 8,
+                zIndex: 9999
               }}
             >
-              <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800" }}><Ionicons name="arrow-forward" size={20}></Ionicons></Text>
+              <Ionicons name="arrow-forward" size={20} color="#fff" />
             </TouchableOpacity>
+          </View>
 
-
-            {/* USER BLUE MARKER */}
-            <Marker
-              coordinate={{
-                latitude: userCoords.lat,
-                longitude: userCoords.lon,
-              }}
-              anchor={{ x: 0.5, y: 1 }}
-            >
-              {/* Blue pin */}
-              <View style={{ alignItems: "center" }}>
-                <View
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 6,
-                    backgroundColor: "blue",
-                    borderWidth: 2,
-                    borderColor: "#fff",
-                  }}
-                />
-
-                {/* Always visible tooltip */}
-                <View
-                  style={{
-                    marginTop: 6,
-                    backgroundColor: theme.bg1,
-                    paddingHorizontal: 8,
-                    paddingVertical: 4,
-                    borderRadius: 8,
-                    shadowColor: "#000",
-                    shadowOpacity: 0.25,
-                    shadowRadius: 4,
-                    elevation: 6,
-                  }}
-                >
-                  <Text style={{ color: "#fff", fontSize: 10, fontWeight: "600" }}>
-                    You are here
-                  </Text>
-                </View>
-              </View>
-            </Marker>
-
-
-            {/* EVENT MARKERS */}
-            {events.map((ev) => {
-              const [lat, lon] = (ev.Location || "").split(",").map(Number);
-              if (!lat || !lon) return null;
-
-              return (
-                <Marker
-                  key={ev.EventID}
-                  coordinate={{ latitude: lat, longitude: lon }}
-                  anchor={{ x: 0.5, y: 1 }}
-                  onPress={() => router.push(`/event_details?id=${ev.EventID}`)}
-                  tracksViewChanges={false}
-                >
-                  <View style={{ alignItems: "center" }}>
-
-                    <TouchableOpacity
-                      onPress={() => router.push(`/event_details?id=${ev.EventID}`)}
-                      activeOpacity={0.9}
-                      style={{ alignItems: "center" }}
-                    >
-                      {/* Pin dot */}
-                      <View
-                        style={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: 6,
-                          backgroundColor: theme.bg7,
-                          borderWidth: 2,
-                          borderColor: "#fff",
-                        }}
-                      />
-                      <View
-                        style={{
-                          marginTop: 6,
-                          backgroundColor: theme.bg1,
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderRadius: 12,
-                          borderColor: theme.bg6,
-                          shadowOpacity: 0.3,
-                          shadowRadius: 5,
-                          elevation: 6,
-                          borderWidth: 0.3,
-                          maxWidth: 160,
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }} numberOfLines={1}>
-                          {ev.EventTitle}
-                        </Text>
-
-                        <Text style={{ color: "#ffffffb5", fontSize: 10, marginTop: 2 }}>
-                          {calculateDistance(userCoords.lat, userCoords.lon, lat, lon)} km away
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                </Marker>
-              );
-            })}
-          </MapView>
+          {/* Bottom bar overlay */}
+          <View
+            style={{
+              width: "95%",
+              height: 30,
+              backgroundColor: "#262626f2",
+              borderBottomLeftRadius: 16,
+              borderBottomRightRadius: 16,
+              marginTop: -26,
+              zIndex: 1
+            }}
+          />
         </View>
       )}
       <ScrollView
@@ -497,19 +506,28 @@ export default function HomeScreen() {
           ) : filteredEvents.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hList}>
               {filteredEvents.map((event: any) => {
-                const img =
-                  event.EventImage ||
-                  "https://assets.simpleviewinc.com/sv-visit-irving/image/upload/c_limit,h_1200,q_75,w_1200/v1/cms_resources/clients/irving-redesign/Events_Page_Header_2903ed9c-40c1-4f6c-9a69-70bb8415295b.jpg";
 
-                // compute display date
+                const isURL = event.EventImage && event.EventImage.startsWith("http");
+
+                const imgSource = isURL
+                  ? { uri: event.EventImage }
+                  : gif_placeholder;
+
                 const eventDate = event.EventTime ? new Date(event.EventTime) : null;
+
                 const whenText = (() => {
                   if (!eventDate) return "";
                   const now = new Date();
-                  const diffMs = (eventDate as Date).getTime() - now.getTime();
+                  const diffMs = eventDate.getTime() - now.getTime();
                   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                  if (diffDays >= 1 && diffDays <= 6) return `in ${diffDays} day${diffDays > 1 ? "s" : ""}`;
-                  return eventDate.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+                  if (diffDays >= 1 && diffDays <= 6)
+                    return `in ${diffDays} day${diffDays > 1 ? "s" : ""}`;
+                  return eventDate.toLocaleString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
                 })();
 
                 const distText = (() => {
@@ -521,22 +539,26 @@ export default function HomeScreen() {
 
                 return (
                   <TouchableOpacity
-                    key={event.EventID ?? event.id ?? Math.random().toString()}
+                    key={event.EventID}
                     onPress={() => router.push(`/event_details?id=${event.EventID}`)}
                     style={[styles.eventCard, { backgroundColor: theme.bg2 }]}
                     activeOpacity={0.85}
                   >
-                    <Image source={{ uri: img }} style={styles.eventImage} resizeMode="cover" />
+                    <Image source={imgSource} style={styles.eventImage} resizeMode="cover" />
+
                     <View style={[styles.eventMeta, { backgroundColor: "rgba(0, 0, 0, 0.7)" }]}>
                       <Text style={styles.eventTitle} numberOfLines={1}>
                         {event.EventTitle}
                       </Text>
                       <Text style={styles.eventWhen}>{whenText}</Text>
-                      <Text style={styles.eventWhen}><Ionicons name="navigate"></Ionicons> {distText}</Text>
+                      <Text style={styles.eventWhen}>
+                        <Ionicons name="navigate" /> {distText}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 );
               })}
+
             </ScrollView>
           ) : (
             <Text style={[styles.emptyText, { color: "#aaa" }]}>No events found.</Text>
