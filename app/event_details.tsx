@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/AuthContext";
 import { core_services } from "@/services/api";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -18,7 +19,7 @@ export default function EventDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const eventId = params.id as string;
-
+const { user }: any = useAuth();
   const theme = Colors["dark"]; // fixed dark mode (your app default)
 
   const [event, setEvent] = useState<any>(null);
@@ -26,7 +27,7 @@ export default function EventDetailsScreen() {
   const [attendees, setAttendees] = useState<any[]>([]);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
 
-  // TODO: replace with real logged in user ID later
+  
   const userId = "TEMP_USER_ID";
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export default function EventDetailsScreen() {
   };
 
   const handleJoin = async () => {
+    const userId = user?.id
     try {
       await core_services.addEventAttender({
         eventId,

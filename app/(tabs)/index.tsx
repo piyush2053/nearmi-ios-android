@@ -213,7 +213,7 @@ export default function HomeScreen() {
   }, []);
 
 
-  const focusMarker = (index:any) => {
+  const focusMarker = (index: any) => {
     if (!filteredEvents[index]) return;
 
     const [lat, lon] = filteredEvents[index].Location.split(",").map(Number);
@@ -260,172 +260,177 @@ export default function HomeScreen() {
       )}
 
       {userCoords && (
-        <MapView
-          ref={mapRef}
-          provider={PROVIDER_GOOGLE}
-          style={{ width: "100%", height: 260, borderRadius: 16 }}
-          customMapStyle={darkMapStyle}
-          initialRegion={{
-            latitude: userCoords.lat,
-            longitude: userCoords.lon,
-            latitudeDelta: 0.0009,
-            longitudeDelta: 0.0009,
-          }}
-
-        >
-          {/* Left Navigation Button */}
-          <TouchableOpacity
-            onPress={() => {
-              const next = currentIndex - 1 >= 0 ? currentIndex - 1 : filteredEvents.length - 1;
-              setCurrentIndex(next);
-              focusMarker(next);
-            }}
-            style={{
-              position: "absolute",
-              bottom: 20,
-              left: 20,
-              backgroundColor: theme.bg1,
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              justifyContent: "center",
-              alignItems: "center",
-              shadowOpacity: 0.3,
-              shadowRadius: 5,
-              elevation: 8,
-            }}
-          >
-            <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800" }}><Ionicons name="arrow-back" size={20}></Ionicons></Text>
-          </TouchableOpacity>
-
-
-          {/* Right Navigation Button */}
-          <TouchableOpacity
-            onPress={() => {
-              const next = currentIndex + 1 < filteredEvents.length ? currentIndex + 1 : 0;
-              setCurrentIndex(next);
-              focusMarker(next);
-            }}
-            style={{
-              position: "absolute",
-              bottom: 20,
-              right: 20,
-              backgroundColor: theme.bg1,
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              justifyContent: "center",
-              alignItems: "center",
-              shadowOpacity: 0.3,
-              shadowRadius: 5,
-              elevation: 8,
-            }}
-          >
-            <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800" }}><Ionicons name="arrow-forward" size={20}></Ionicons></Text>
-          </TouchableOpacity>
-
-
-          {/* USER BLUE MARKER */}
-          <Marker
-            coordinate={{
+        <View style={{ width: "100%", alignItems: "center", marginTop: 10 }}>
+          <MapView
+            ref={mapRef}
+            provider={PROVIDER_GOOGLE}
+            style={{ width: "95%", height: 260, borderRadius: 16 }}
+            customMapStyle={darkMapStyle}
+            initialRegion={{
               latitude: userCoords.lat,
               longitude: userCoords.lon,
+              latitudeDelta: 0.0009,
+              longitudeDelta: 0.0009,
             }}
-            anchor={{ x: 0.5, y: 1 }}
+
           >
-            {/* Blue pin */}
-            <View style={{ alignItems: "center" }}>
-              <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 6,
-                  backgroundColor: "blue",
-                  borderWidth: 2,
-                  borderColor: "#fff",
-                }}
-              />
-
-              {/* Always visible tooltip */}
-              <View
-                style={{
-                  marginTop: 6,
-                  backgroundColor: theme.bg1,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 8,
-                  shadowColor: "#000",
-                  shadowOpacity: 0.25,
-                  shadowRadius: 4,
-                  elevation: 6,
-                }}
-              >
-                <Text style={{ color: "#fff", fontSize: 10, fontWeight: "600" }}>
-                  You are here
-                </Text>
-              </View>
-            </View>
-          </Marker>
+            {/* Left Navigation Button */}
+            <TouchableOpacity
+              onPress={() => {
+                const next = currentIndex - 1 >= 0 ? currentIndex - 1 : filteredEvents.length - 1;
+                setCurrentIndex(next);
+                focusMarker(next);
+              }}
+              style={{
+                position: "absolute",
+                bottom: 20,
+                left: 20,
+                backgroundColor: theme.bg1,
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                justifyContent: "center",
+                alignItems: "center",
+                shadowOpacity: 0.3,
+                shadowRadius: 5,
+                elevation: 8,
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800" }}><Ionicons name="arrow-back" size={20}></Ionicons></Text>
+            </TouchableOpacity>
 
 
-          {/* EVENT MARKERS */}
-          {events.map((ev) => {
-            const [lat, lon] = (ev.Location || "").split(",").map(Number);
-            if (!lat || !lon) return null;
+            {/* Right Navigation Button */}
+            <TouchableOpacity
+              onPress={() => {
+                const next = currentIndex + 1 < filteredEvents.length ? currentIndex + 1 : 0;
+                setCurrentIndex(next);
+                focusMarker(next);
+              }}
+              style={{
+                position: "absolute",
+                bottom: 20,
+                right: 20,
+                backgroundColor: theme.bg1,
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                justifyContent: "center",
+                alignItems: "center",
+                shadowOpacity: 0.3,
+                shadowRadius: 5,
+                elevation: 8,
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800" }}><Ionicons name="arrow-forward" size={20}></Ionicons></Text>
+            </TouchableOpacity>
 
-            return (
-              <Marker
-                key={ev.EventID}
-                coordinate={{ latitude: lat, longitude: lon }}
-                anchor={{ x: 0.5, y: 1 }}
-              >
-                <TouchableOpacity
-                  onPress={() => router.push(`/event_details?id=${ev.EventID}`)}
-                  activeOpacity={0.9}
-                  style={{ alignItems: "center" }}
+
+            {/* USER BLUE MARKER */}
+            <Marker
+              coordinate={{
+                latitude: userCoords.lat,
+                longitude: userCoords.lon,
+              }}
+              anchor={{ x: 0.5, y: 1 }}
+            >
+              {/* Blue pin */}
+              <View style={{ alignItems: "center" }}>
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: "blue",
+                    borderWidth: 2,
+                    borderColor: "#fff",
+                  }}
+                />
+
+                {/* Always visible tooltip */}
+                <View
+                  style={{
+                    marginTop: 6,
+                    backgroundColor: theme.bg1,
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.25,
+                    shadowRadius: 4,
+                    elevation: 6,
+                  }}
                 >
-                  {/* Pin dot */}
-                  <View
-                    style={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: 6,
-                      backgroundColor: theme.bg7,
-                      borderWidth: 2,
-                      borderColor: "#fff",
-                    }}
-                  />
-                  <View
-                    style={{
-                      marginTop: 6,
-                      backgroundColor: theme.bg1,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                      borderRadius: 12,
-                      borderColor: theme.bg6,
-                      shadowOpacity: 0.3,
-                      shadowRadius: 5,
-                      elevation: 6,
-                      borderWidth: 0.3,
-                      maxWidth: 160,
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }} numberOfLines={1}>
-                      {ev.EventTitle}
-                    </Text>
+                  <Text style={{ color: "#fff", fontSize: 10, fontWeight: "600" }}>
+                    You are here
+                  </Text>
+                </View>
+              </View>
+            </Marker>
 
-                    <Text style={{ color: "#ffffffb5", fontSize: 10, marginTop: 2 }}>
-                      {calculateDistance(userCoords.lat, userCoords.lon, lat, lon)} km away
-                    </Text>
+
+            {/* EVENT MARKERS */}
+            {events.map((ev) => {
+              const [lat, lon] = (ev.Location || "").split(",").map(Number);
+              if (!lat || !lon) return null;
+
+              return (
+                <Marker
+                  key={ev.EventID}
+                  coordinate={{ latitude: lat, longitude: lon }}
+                  anchor={{ x: 0.5, y: 1 }}
+                  onPress={() => router.push(`/event_details?id=${ev.EventID}`)}
+                  tracksViewChanges={false}
+                >
+                  <View style={{ alignItems: "center" }}>
+
+                    <TouchableOpacity
+                      onPress={() => router.push(`/event_details?id=${ev.EventID}`)}
+                      activeOpacity={0.9}
+                      style={{ alignItems: "center" }}
+                    >
+                      {/* Pin dot */}
+                      <View
+                        style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 6,
+                          backgroundColor: theme.bg7,
+                          borderWidth: 2,
+                          borderColor: "#fff",
+                        }}
+                      />
+                      <View
+                        style={{
+                          marginTop: 6,
+                          backgroundColor: theme.bg1,
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                          borderRadius: 12,
+                          borderColor: theme.bg6,
+                          shadowOpacity: 0.3,
+                          shadowRadius: 5,
+                          elevation: 6,
+                          borderWidth: 0.3,
+                          maxWidth: 160,
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }} numberOfLines={1}>
+                          {ev.EventTitle}
+                        </Text>
+
+                        <Text style={{ color: "#ffffffb5", fontSize: 10, marginTop: 2 }}>
+                          {calculateDistance(userCoords.lat, userCoords.lon, lat, lon)} km away
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
-              </Marker>
-            );
-          })}
-
-
-        </MapView>
+                </Marker>
+              );
+            })}
+          </MapView>
+        </View>
       )}
       <ScrollView
         contentContainerStyle={styles.main}
@@ -759,38 +764,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     padding: 4,
-  },
-  mapCardsContainer: {
-    position: "absolute",
-    top: 12,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingLeft: 20,
-    paddingRight: 20,
-    zIndex: 20,
-  },
-
-  mapCard: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    marginRight: 12,
-    width: 180,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-
-
-  mapCardTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  mapCardSub: {
-    fontSize: 12,
-    marginTop: 4,
   },
 });
