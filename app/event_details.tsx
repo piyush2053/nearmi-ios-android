@@ -1,5 +1,7 @@
+import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
   Image,
@@ -19,20 +21,46 @@ export default function EventDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const eventId = params.id as string;
-const { user }: any = useAuth();
+  const { user }: any = useAuth();
   const theme = Colors["dark"]; // fixed dark mode (your app default)
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
 
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [attendees, setAttendees] = useState<any[]>([]);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
 
-  
-  const userId = "TEMP_USER_ID";
+      const pos = await Location.getCurrentPositionAsync({});
+      setUserCoords({
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+      });
+    })();
+
+    loadEventDetails();
+  }, []);
 
   useEffect(() => {
     loadEventDetails();
   }, []);
+  const calculateDistance = (lat1: any, lon1: any, lat2: any, lon2: any) => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return (R * c).toFixed(1); // km
+  };
 
   const loadEventDetails = async () => {
     try {
@@ -56,7 +84,7 @@ const { user }: any = useAuth();
       const people = await core_services.getEventAttendees(eventId);
       setAttendees(people);
 
-      const joined = people.some((p: any) => p.UserId === userId);
+      const joined = people.some((p: any) => p.UserId === user.id);
       setAlreadyJoined(joined);
     } catch (err) {
       console.error(err);
@@ -95,6 +123,9 @@ const { user }: any = useAuth();
       </View>
     );
   }
+  const [eventLat, eventLon] = event.location
+    ? event.location.split(",").map(Number)
+    : [null, null];
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.bg1 }]}>
@@ -117,7 +148,16 @@ const { user }: any = useAuth();
       <View style={styles.content}>
         <Text style={styles.meta}>📅 {event.date}</Text>
         <Text style={styles.meta}>🕒 {event.time}</Text>
-        <Text style={styles.meta}>📍 {event.location}</Text>
+        <Text style={styles.meta}>
+          <Ionicons size={20} name="location" />{" "}
+          {eventLat && eventLon
+            ? `${userCoords && eventLat && eventLon
+              ? `${calculateDistance(userCoords.lat, userCoords.lon, eventLat, eventLon)} km away`
+              : "Calculating distance..."
+            }`
+            : "Location unavailable"}
+        </Text>
+
 
         <Text style={styles.sectionTitle}>About Event</Text>
         <Text style={styles.desc}>{event.description}</Text>
