@@ -1,6 +1,7 @@
 import GlobalHeader from '@/components/GlobalHeader';
 import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { EventsProvider } from '@/contexts/EventsContext';
 import { RefreshProvider } from '@/contexts/RefreshContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import "@/notifications/setup";
@@ -85,27 +86,28 @@ function NavigationGate() {
   return (
     <RefreshProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <EventsProvider>
+          {/* TOP SAFE AREA + HEADER */}
+          <SafeAreaView style={[styles.safeTop, { backgroundColor: theme.bg7 }]} edges={["top"]}>
+            <GlobalHeader />
+          </SafeAreaView>
 
-        {/* TOP SAFE AREA + HEADER */}
-        <SafeAreaView style={[styles.safeTop, { backgroundColor: theme.bg7 }]} edges={["top"]}>
-          <GlobalHeader />
-        </SafeAreaView>
+          {/* MAIN CONTENT */}
+          <View style={{ flex: 1, backgroundColor: theme.bg7 }}>
+            <Stack screenOptions={{ headerShown: false }} initialRouteName="(public)/loading" >
+              <Stack.Screen name="(public)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+            </Stack>
+          </View>
 
-        {/* MAIN CONTENT */}
-        <View style={{ flex: 1, backgroundColor: theme.bg7 }}>
-          <Stack screenOptions={{ headerShown: false }} initialRouteName="(public)/loading" >
-            <Stack.Screen name="(public)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-          </Stack>
-        </View>
+          {/* BOTTOM SAFE AREA */}
+          <SafeAreaView edges={["bottom"]} style={{ backgroundColor: theme.bg1 }} />
 
-        {/* BOTTOM SAFE AREA */}
-        <SafeAreaView edges={["bottom"]} style={{ backgroundColor: theme.bg1 }} />
-
-        <StatusBar style="light" />
+          <StatusBar style="light" />
+        </EventsProvider>
       </ThemeProvider>
-    </RefreshProvider>
+    </RefreshProvider >
   );
 }
 

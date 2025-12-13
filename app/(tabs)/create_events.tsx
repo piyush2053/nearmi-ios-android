@@ -1,16 +1,14 @@
-// app/(tabs)/create-event.tsx
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { core_services } from "@/services/api";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
-  Modal,
-  Platform,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,13 +18,19 @@ import {
   View
 } from "react-native";
 
-const suggestedTitles = ["Turf Cricket", "Garba Night", "House Party", "Birthday Bash", "Corporate Meetup"];
+const suggestedTitles = [
+  "Turf Cricket",
+  "Garba Night",
+  "House Party",
+  "Birthday Bash",
+  "Corporate Meetup",
+];
 
 export default function CreateEventScreen() {
   const colorScheme = useColorScheme() ?? "dark";
   const theme = Colors[colorScheme];
-
   const { user }: any = useAuth();
+  const router = useRouter();
 
   const [eventTitle, setEventTitle] = useState("");
   const [eventDesc, setEventDesc] = useState("");
@@ -37,90 +41,70 @@ export default function CreateEventScreen() {
   const [categories, setCategories] = useState<any[]>([]);
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<Date | null>(null);
-  const router = useRouter();
 
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-useEffect(() => {
-  Notifications.requestPermissionsAsync();
-}, []);
 
-
-  // Category Dropdown
-  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const bannerPlaceholder =
+    "https://static.toiimg.com/thumb/msid-119900061,width-1280,height-720,resizemode-4/119900061.jpg";
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await core_services.getCategories();
-        setCategories(res || []);
-      } catch (err) {
-        console.log("Category fetch failed", err);
-      }
-    };
-    load();
+    Notifications.requestPermissionsAsync();
   }, []);
 
   useEffect(() => {
-    fetchLocationAuto();
+    loadCategories();
+    autoLocation();
   }, []);
 
-  const fetchLocationAuto = async () => {
+  const loadCategories = async () => {
+    try {
+      const res = await core_services.getCategories();
+      setCategories(res || []);
+    } catch { }
+  };
+
+  const autoLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Location Required", "Enable location to create event.");
-      return;
-    }
+    if (status !== "granted") return;
 
     const pos = await Location.getCurrentPositionAsync({});
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    setLocationStr(`${lat}, ${lng}`);
+    setLocationStr(`${pos.coords.latitude}, ${pos.coords.longitude}`);
   };
- const triggerSuccessNotification = async () => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "Event Created",
-      body: "Your event has been created successfully.",
-      sound: "default",
-      priority: Notifications.AndroidNotificationPriority.HIGH,
-    },
-    trigger: null, // fire immediately
-  });
-};
 
+  const triggerSuccess = () => {
+    Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Event Created",
+        body: "Your event has been created successfully.",
+      },
+      trigger: null,
+    });
+  };
 
-  const handleCreateEvent = async () => {
-    if (!eventTitle || !eventDesc || !eventCategory || !date || !time) {
-      Alert.alert("Required", "Please fill all required fields.");
-      return;
-    }
+  const handleCreate = async () => {
+    if (!eventTitle || !eventDesc || !eventCategory || !date || !time)
+      return Alert.alert("Required", "Please fill all required fields.");
 
-    if (!locationStr) {
-      Alert.alert("Error", "Unable to fetch GPS location. Try again.");
-      return;
-    }
-
-    const mergedDateTime = new Date(date);
-    mergedDateTime.setHours(time.getHours());
-    mergedDateTime.setMinutes(time.getMinutes());
-
-    const eventDateTime = mergedDateTime.toISOString();
+    const merged = new Date(date);
+    merged.setHours(time.getHours());
+    merged.setMinutes(time.getMinutes());
 
     const payload = {
       eventTitle,
       eventDesc,
       categoryId: eventCategory,
       location: locationStr,
-      userId: user?.id || "UNKNOWN_USER",
-      eventTime: eventDateTime,
+      userId: user?.id,
+      eventTime: merged.toISOString(),
       directJoin,
       numTickets,
     };
 
     try {
       await core_services.createEvent(payload);
-      await triggerSuccessNotification();
+      triggerSuccess();
       router.replace("/");
     } catch (err) {
       Alert.alert("Error", "Failed creating event.");
@@ -128,246 +112,353 @@ useEffect(() => {
   };
 
   return (
-    <ScrollView style={[styles.wrap, { backgroundColor: theme.bg1 }]}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: theme.bg1 }}
+      contentContainerStyle={{ paddingBottom: 80 }}
+    >
 
-      <Text style={[styles.heading, { color: theme.bg6 }]}>Create Event</Text>
+      {/* ------------------ BANNER ------------------ */}
+      <View style={styles.headerImgWrap}>
+        <Image
+          source={{ uri: bannerPlaceholder }}
+          style={styles.headerImg}
+        />
 
-      {/* Title */}
-      <Text style={[styles.label, { color: theme.bg6 }]}>Event Title</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]}
-        placeholder="Enter title"
-        placeholderTextColor="#999"
-        value={eventTitle}
-        onChangeText={setEventTitle}
-        maxLength={50}
-      />
-
-      <View style={styles.suggestions}>
-        {suggestedTitles.map((t) => (
-          <TouchableOpacity key={t} onPress={() => setEventTitle(t)}>
-            <Text style={[styles.chip, { backgroundColor: theme.bg6, color: theme.bg1 }]}>{t}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Description */}
-      <Text style={[styles.label, { color: theme.bg6 }]}>Event Description</Text>
-      <TextInput
-        style={[styles.textarea, { backgroundColor: theme.bg3, color: theme.bg2 }]}
-        placeholder="Enter description"
-        placeholderTextColor="#999"
-        value={eventDesc}
-        onChangeText={setEventDesc}
-        maxLength={80}
-        multiline
-      />
-
-      {/* Category Dropdown */}
-      <Text style={[styles.label, { color: theme.bg6 }]}>Select Category</Text>
-
-      <TouchableOpacity
-        onPress={() => setCategoryModalVisible(true)}
-        style={[styles.input, { backgroundColor: theme.bg3, justifyContent: "center" }]}
-      >
-        <Text style={{ color: eventCategory ? theme.bg6 : "#999" }}>
-          {eventCategory ? categories?.find((c: any) => c.CategoryId === eventCategory)?.CategoryName : "Select Category"}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Category Modal */}
-      <Modal visible={categoryModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalBox, { backgroundColor: theme.bg2 }]}>
-
-            {/* None Option */}
-            <TouchableOpacity
-              onPress={() => {
-                setEventCategory("");
-                setCategoryModalVisible(false);
-              }}
-            >
-              <Text style={[styles.modalItem, { color: theme.bg1 }]}>None</Text>
-            </TouchableOpacity>
-
-            {categories?.map((cat: any) => (
-              <TouchableOpacity
-                key={cat.CategoryId}
-                onPress={() => {
-                  setEventCategory(cat.CategoryId);
-                  setCategoryModalVisible(false);
-                }}
-              >
-                <Text style={[styles.modalItem, { color: theme.bg1 }]}>
-                  {cat.CategoryName}
-                </Text>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
-              <Text style={[styles.modalClose, { color: theme.bg6 }]}>Close</Text>
-            </TouchableOpacity>
-
+        {/* Glass Back Button */}
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <View style={styles.backGlass}>
+            <Ionicons name="arrow-back" size={20} color="#fff" />
           </View>
-        </View>
-      </Modal>
-
-      {/* Date Picker */}
-      <Text style={[styles.label, { color: theme.bg6 }]}>Event Date</Text>
-      <TouchableOpacity
-        onPress={() => setShowDatePicker(true)}
-        style={[styles.input, { backgroundColor: theme.bg3, justifyContent: "center" }]}
-      >
-        <Text style={{ color: date ? theme.bg6 : "#999" }}>
-          {date ? date.toDateString() : "Pick a Date"}
-        </Text>
-      </TouchableOpacity>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={date || new Date()}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(e: any, value: any) => {
-            setShowDatePicker(false);
-            if (value) setDate(value);
-          }}
-        />
-      )}
-
-      {/* Time Picker */}
-      <Text style={[styles.label, { color: theme.bg6 }]}>Event Time</Text>
-      <TouchableOpacity
-        onPress={() => setShowTimePicker(true)}
-        style={[styles.input, { backgroundColor: theme.bg3, justifyContent: "center" }]}
-      >
-        <Text style={{ color: time ? theme.bg6 : "#999" }}>
-          {time ? time.toLocaleTimeString().slice(0, 5) : "Pick Time"}
-        </Text>
-      </TouchableOpacity>
-
-      {showTimePicker && (
-        <DateTimePicker
-          value={time || new Date()}
-          mode="time"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(e, value) => {
-            setShowTimePicker(false);
-            if (value) setTime(value);
-          }}
-        />
-      )}
-
-      {/* Tickets */}
-      <Text style={[styles.label, { color: theme.bg6 }]}>Number of Tickets</Text>
-      <View style={styles.ticketRow}>
-        <TouchableOpacity
-          style={[styles.ticketBtn, { backgroundColor: theme.bg3 }]}
-          onPress={() => setNumTickets((p) => Math.max(1, p - 1))}
-        >
-          <Text style={{ color: theme.bg6 }}>-</Text>
-        </TouchableOpacity>
-
-        <Text style={[styles.ticketCount, { color: theme.bg6 }]}>{numTickets}</Text>
-
-        <TouchableOpacity
-          style={[styles.ticketBtn, { backgroundColor: theme.bg3 }]}
-          onPress={() => setNumTickets((p) => p + 1)}
-        >
-          <Text style={{ color: theme.bg6 }}>+</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Direct Join Checkbox */}
-      <TouchableOpacity
-        style={styles.checkboxRow}
-        onPress={() => setDirectJoin(!directJoin)}
-      >
-        <View
-          style={[
-            styles.checkboxBox,
-            {
-              borderColor: theme.bg6,
-              backgroundColor: directJoin ? "transparent" : theme.bg6,
-            },
-          ]}
-        />
-        <Text style={[styles.checkboxLabel, { color: theme.bg6 }]}>
-          Ask to Join
-        </Text>
-      </TouchableOpacity>
+      {/* ------------------ CARD ------------------ */}
+      <View style={[styles.card, { backgroundColor: theme.bg1 }]}>
 
-      {/* Create Event Button */}
-      <TouchableOpacity
-        style={[styles.createBtn, { backgroundColor: theme.bg6 }]}
-        onPress={handleCreateEvent}
-      >
-        <Text style={[styles.createBtnText, { color: theme.bg1 }]}>Create Event</Text>
-      </TouchableOpacity>
+        {/* Event Title */}
+        <Text style={styles.label}>Event Title</Text>
+        <TextInput
+          style={[styles.inputLine, { color: theme.bg6 }]}
+          placeholder="Music Concert"
+          placeholderTextColor="#999"
+          value={eventTitle}
+          onChangeText={setEventTitle}
+        />
+        <View style={styles.divider} />
+
+        {/* Suggestions */}
+        <View style={styles.suggestionRow}>
+          {suggestedTitles.map((t) => (
+            <TouchableOpacity
+              key={t}
+              onPress={() => setEventTitle(t)}
+              style={[styles.suggestionChip, { backgroundColor: theme.bg6 }]}
+            >
+              <Text style={{ color: theme.bg1 }}>{t}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Date + Time */}
+        <Text style={styles.label}>Date & Time</Text>
+        <View style={styles.row}>
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            style={[styles.pillSmall, { backgroundColor: theme.bg1 }]}
+          >
+            <Ionicons name="calendar-outline" size={16} color="#aaa" />
+            <Text style={styles.pillText}>
+              {date ? date.toDateString() : "Pick date"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setShowTimePicker(true)}
+            style={[styles.pillSmall, { backgroundColor: theme.bg1 }]}
+          >
+            <Ionicons name="time-outline" size={16} color="#aaa" />
+            <Text style={styles.pillText}>
+              {time
+                ? time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "Pick time"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Description */}
+        <Text style={styles.label}>Additional Information</Text>
+        <TextInput
+          style={[styles.textAreaLine, { color: theme.bg6 }]}
+          multiline
+          placeholder="Tell more about your event..."
+          placeholderTextColor="#999"
+          value={eventDesc}
+          onChangeText={setEventDesc}
+        />
+        <View style={styles.divider} />
+
+        {/* Category */}
+        <Text style={styles.label}>Category</Text>
+        <TouchableOpacity onPress={() => setCategoryModalVisible(true)} style={styles.inputLine}>
+          <Text style={{ color: theme.bg6 }}>
+            {eventCategory
+              ? categories.find((c) => c.CategoryId === eventCategory)?.CategoryName
+              : "Select Category"}
+          </Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
+
+        {/* Number of Attendees */}
+        <Text style={styles.label}>Number of Attendees</Text>
+        <View style={styles.ticketRow}>
+          <TouchableOpacity
+            style={[styles.ticketBtn, { backgroundColor: theme.bg3 }]}
+            onPress={() => setNumTickets((p) => Math.max(1, p - 1))}
+          >
+            <Text style={{ color: theme.bg6 }}>-</Text>
+          </TouchableOpacity>
+
+          <Text style={[styles.ticketCount, { color: theme.bg6 }]}>{numTickets}</Text>
+
+          <TouchableOpacity
+            style={[styles.ticketBtn, { backgroundColor: theme.bg3 }]}
+            onPress={() => setNumTickets((p) => p + 1)}
+          >
+            <Text style={{ color: theme.bg6 }}>+</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Request to Join Toggle */}
+        <TouchableOpacity
+          style={styles.checkboxRow}
+          onPress={() => setDirectJoin(!directJoin)}
+          activeOpacity={0.7}
+        >
+          <View
+            style={[
+              styles.checkboxBox,
+              {
+                borderColor: theme.bg6,
+                backgroundColor: directJoin ? theme.bg6 : "transparent",
+              },
+            ]}
+          >
+            {directJoin && (
+              <Ionicons name="checkmark" size={14} color={theme.bg1} />
+            )}
+          </View>
+
+          <Text style={[styles.checkboxLabel, { color: theme.bg6 }]}>
+            Ask to Join
+          </Text>
+        </TouchableOpacity>
+
+        {/* Create Button */}
+        <TouchableOpacity
+          style={[styles.createBtn, { backgroundColor: theme.bg6 }]}
+          onPress={handleCreate}
+        >
+          <Text style={{ color: theme.bg1, fontWeight: "700", fontSize: 16 }}>
+            Create Event
+          </Text>
+        </TouchableOpacity>
+
+      </View>
 
     </ScrollView>
   );
+
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, padding: 16 },
-  heading: { fontSize: 24, fontWeight: "700", marginBottom: 20 },
-  label: { fontSize: 14, marginBottom: 6, marginTop: 14 },
-  input: { height: 48, borderRadius: 10, paddingHorizontal: 14 },
-  textarea: { borderRadius: 10, padding: 14, minHeight: 80 },
-  suggestions: { flexDirection: "row", flexWrap: "wrap", marginTop: 6 },
-  chip: {
+  headerImgWrap: {
+    height: 180,
+    position: "relative",
+    margin: 10
+  },
+  headerImg: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 30,
+  },
+  backBtn: {
+    position: "absolute",
+    top: 10,
+    left: 20,
+  },
+  backGlass: {
+    padding: 10,
+    borderRadius: 50,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  card: {
+    borderRadius: 20,
+    padding: 10,
+    marginHorizontal: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  inputLine: {
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#ffffff22",
+    marginBottom: 10,
+  },
+
+  textAreaLine: {
+    minHeight: 60,
+    fontSize: 15,
+    paddingVertical: 10,
+  },
+
+  pillSmall: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    flex: 1,
+    marginRight: 10,
+  },
+
+  pillText: {
+    color: "#aaa",
+    marginLeft: 6,
+  },
+
+  row: {
+    flexDirection: "row",
+    marginBottom: 10,
+  },
+
+  suggestionChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     marginRight: 8,
     marginBottom: 8,
-    fontSize: 12,
-    fontWeight: "500",
   },
-  ticketRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
-  ticketBtn: {
+
+  inviteRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+
+  inviteCircle: {
     width: 36,
     height: 36,
+    borderRadius: 18,
+    backgroundColor: "#444",
+    marginRight: 8,
+  },
+
+  inviteAdd: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 10,
   },
-  ticketCount: { width: 50, textAlign: "center", fontSize: 16 },
-  checkboxRow: { flexDirection: "row", alignItems: "center", marginTop: 12 },
+
+  createBtn: {
+    marginTop: 24,
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: "center",
+  },
+
+
+
+  label: {
+    color: "#fff",
+    fontSize: 14,
+    marginBottom: 6,
+    marginTop: 14,
+  },
+
+  input: {
+    height: 46,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+
+  textArea: {
+    minHeight: 90,
+    borderRadius: 12,
+    padding: 12,
+  },
+
+  suggestionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+  },
+
+  col: {
+    width: "48%",
+  },
+
+  pillBtn: {
+    height: 46,
+    borderRadius: 12,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  ticketRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 16,
+    paddingHorizontal: 4,
+  },
+
+  ticketBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#1E1E1E55", // subtle dark pill
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  ticketCount: {
+    fontSize: 18,
+    fontWeight: "700",
+    width: 55,
+    textAlign: "center",
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16,
+  },
+
   checkboxBox: {
     width: 22,
     height: 22,
-    borderWidth: 2,
     borderRadius: 6,
-    marginRight: 10,
-  },
-  checkboxLabel: { fontSize: 16 },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    padding: 30,
-  },
-  modalBox: {
-    borderRadius: 12,
-    padding: 16,
-  },
-  modalItem: {
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  modalClose: {
-    textAlign: "center",
-    marginTop: 14,
-    fontSize: 16,
-  },
-  createBtn: {
-    marginTop: 30,
-    height: 48,
-    borderRadius: 30,
+    borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
+    marginRight: 10,
   },
-  createBtnText: { fontSize: 16, fontWeight: "700" },
+
+  checkboxLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+
 });

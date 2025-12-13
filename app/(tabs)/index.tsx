@@ -1,6 +1,7 @@
+import { SPONSORED_EVENTS } from "@/constants/sponseredEvents";
 import { Colors } from "@/constants/theme";
+import { useEvents } from "@/contexts/EventsContext";
 import { useGlobalRefresh } from "@/contexts/RefreshContext";
-import { core_services } from "@/services/api";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
@@ -17,80 +18,61 @@ import {
   useColorScheme,
   View
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView from "react-native-maps";
 const gif_placeholder = require("../../assets/gifs/pl1.gif");
 
 const { width: SCREEN_W } = Dimensions.get("window");
-const darkMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#1A1A1A" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#1A1A1A" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#e0e0e0" }] },
+// const darkMapStyle = [
+//   { elementType: "geometry", stylers: [{ color: "#1A1A1A" }] },
+//   { elementType: "labels.text.stroke", stylers: [{ color: "#1A1A1A" }] },
+//   { elementType: "labels.text.fill", stylers: [{ color: "#e0e0e0" }] },
 
-  {
-    featureType: "poi",
-    elementType: "geometry",
-    stylers: [{ color: "#222" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#aaaaaa" }],
-  },
+//   {
+//     featureType: "poi",
+//     elementType: "geometry",
+//     stylers: [{ color: "#222" }],
+//   },
+//   {
+//     featureType: "poi",
+//     elementType: "labels.text.fill",
+//     stylers: [{ color: "#aaaaaa" }],
+//   },
 
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#0F1115" }],
-  },
+//   {
+//     featureType: "water",
+//     elementType: "geometry",
+//     stylers: [{ color: "#0F1115" }],
+//   },
 
-  {
-    featureType: "transit",
-    stylers: [{ visibility: "off" }],
-  },
+//   {
+//     featureType: "transit",
+//     stylers: [{ visibility: "off" }],
+//   },
 
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#2C2C2C" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#8a8a8a" }],
-  },
-];
+//   {
+//     featureType: "road",
+//     elementType: "geometry",
+//     stylers: [{ color: "#2C2C2C" }],
+//   },
+//   {
+//     featureType: "road",
+//     elementType: "labels.text.fill",
+//     stylers: [{ color: "#8a8a8a" }],
+//   },
+// ];
 
 export default function HomeScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "dark";
   const theme = Colors[colorScheme];
   const { refreshing, onRefresh } = useGlobalRefresh();
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { events, loading, refreshEvents } = useEvents();
   const [searchText, setSearchText] = useState<string>("");
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationEnabled, setLocationEnabled] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const mapRef = useRef<MapView | null>(null);
-
-
-  // Fetch events
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      try {
-        const data = await core_services.getAllEvents();
-        setEvents(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.warn("Error fetching events:", err);
-        setEvents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEvents();
-  }, []);
 
   // Request location (auto on screen mount)
   useEffect(() => {
@@ -127,33 +109,6 @@ export default function HomeScreen() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return (R * c).toFixed(1); // km with 1 decimal
   };
-
-  // Sort by distance if coords available
-  useEffect(() => {
-    if (!userCoords || events.length === 0) return;
-    const sorted = [...events].sort((a, b) => {
-      const [latA, lonA] = (a.Location || "").split(",").map(Number);
-      const [latB, lonB] = (b.Location || "").split(",").map(Number);
-
-      const validA = !isNaN(latA) && !isNaN(lonA);
-      const validB = !isNaN(latB) && !isNaN(lonB);
-      if (!validA && !validB) return 0;
-      if (!validA) return 1;
-      if (!validB) return -1;
-
-      const distA = parseFloat(calculateDistance(userCoords.lat, userCoords.lon, latA, lonA));
-      const distB = parseFloat(calculateDistance(userCoords.lat, userCoords.lon, latB, lonB));
-      return distA - distB;
-    });
-    setEvents(sorted);
-  }, [userCoords, events.length]);
-
-  // Filtered events by search & category
-  const filteredEvents = useMemo(() => {
-    return events
-      .filter((e) => (selectedCategory ? e.Category === selectedCategory : true))
-      .filter((e) => (e.EventTitle || "").toLowerCase().includes(searchText.toLowerCase()));
-  }, [events, searchText, selectedCategory]);
 
   const categories = ["Sports", "Dance", "Music", "Food"];
   const placeholderOptions = [
@@ -212,6 +167,38 @@ export default function HomeScreen() {
 
     return () => clearInterval(interval);
   }, []);
+  const sortedEvents = useMemo(() => {
+    if (!userCoords) return events;
+
+    return [...events].sort((a, b) => {
+      const [latA, lonA] = (a.Location || "").split(",").map(Number);
+      const [latB, lonB] = (b.Location || "").split(",").map(Number);
+
+      if (!latA || !lonA) return 1;
+      if (!latB || !lonB) return -1;
+
+      const distA = parseFloat(
+        calculateDistance(userCoords.lat, userCoords.lon, latA, lonA)
+      );
+      const distB = parseFloat(
+        calculateDistance(userCoords.lat, userCoords.lon, latB, lonB)
+      );
+
+      return distA - distB;
+    });
+  }, [events, userCoords]);
+
+  const filteredEvents = useMemo(() => {
+    return sortedEvents
+      .filter((e) =>
+        selectedCategory ? e.Category === selectedCategory : true
+      )
+      .filter((e) =>
+        (e.EventTitle || "")
+          .toLowerCase()
+          .includes(searchText.toLowerCase())
+      );
+  }, [sortedEvents, searchText, selectedCategory]);
 
 
   const focusMarker = (index: any) => {
@@ -260,9 +247,8 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {userCoords && (
+      {/* {userCoords && (
         <View style={{ width: "100%", alignItems: "center", marginTop: 10 }}>
-          {/* Container with relative position for absolute buttons */}
           <View style={{ width: "95%", position: "relative" }}>
             <MapView
               ref={mapRef}
@@ -276,7 +262,6 @@ export default function HomeScreen() {
                 longitudeDelta: 0.0009,
               }}
             >
-              {/* USER BLUE MARKER */}
               <Marker
                 coordinate={{
                   latitude: userCoords.lat,
@@ -315,7 +300,7 @@ export default function HomeScreen() {
                 </View>
               </Marker>
 
-              {/* EVENT MARKERS */}
+              
               {events.map((ev) => {
                 const [lat, lon] = (ev.Location || "").split(",").map(Number);
                 if (!lat || !lon) return null;
@@ -374,7 +359,7 @@ export default function HomeScreen() {
               })}
             </MapView>
 
-            {/* Left Navigation Button - NOW OUTSIDE MapView */}
+            
             <TouchableOpacity
               onPress={() => {
                 const next = currentIndex - 1 >= 0 ? currentIndex - 1 : filteredEvents.length - 1;
@@ -400,7 +385,7 @@ export default function HomeScreen() {
               <Ionicons name="arrow-back" size={20} color="#fff" />
             </TouchableOpacity>
 
-            {/* Right Navigation Button - NOW OUTSIDE MapView */}
+            
             <TouchableOpacity
               onPress={() => {
                 const next = currentIndex + 1 < filteredEvents.length ? currentIndex + 1 : 0;
@@ -426,8 +411,6 @@ export default function HomeScreen() {
               <Ionicons name="arrow-forward" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
-
-          {/* Bottom bar overlay */}
           <View
             style={{
               width: "95%",
@@ -440,15 +423,14 @@ export default function HomeScreen() {
             }}
           />
         </View>
-      )}
+      )} */}
       <ScrollView
         contentContainerStyle={styles.main}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.bg6}
+            refreshing={loading}
+            onRefresh={refreshEvents}
           />
         }
       >
@@ -604,6 +586,75 @@ export default function HomeScreen() {
             </View>
           </ScrollView>
         </View>
+        {/* ---------------- Sponsored / Paid Events ---------------- */}
+        <View style={{ marginTop: 22 }}>
+          <View style={styles.filtersHeader}>
+            <Text style={[styles.sectionLabel, { color: "white" }]}>
+              Sponsored & Paid
+            </Text>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 10 }}
+          >
+            {SPONSORED_EVENTS.map((item:any) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.eventCard,
+                  {
+                    backgroundColor: theme.bg2,
+                    marginRight: 14,
+                    borderWidth: 0.5,
+                    borderColor: theme.bg6,
+                  },
+                ]}
+              >
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.eventImage}
+                  resizeMode="cover"
+                />
+
+                {/* Sponsored Badge */}
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    left: 8,
+                    backgroundColor: "#FACC15",
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Text style={{ color: "#000", fontSize: 10, fontWeight: "700" }}>
+                    {item.type}
+                  </Text>
+                </View>
+
+                {/* Meta */}
+                <View
+                  style={[
+                    styles.eventMeta,
+                    { backgroundColor: "rgba(0,0,0,0.75)" },
+                  ]}
+                >
+                  <Text style={styles.eventTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+
+                  <Text style={{ color: "#ffffffb5", fontSize: 11, marginTop: 4 }}>
+                    By {item.publisher}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
       </ScrollView>
     </View>
   );

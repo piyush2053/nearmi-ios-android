@@ -19,6 +19,11 @@
       "**/*"
     ],
     "android": {
+      "config": {
+        "googleMaps": {
+          "apiKey": "KEY_ENV_ME_HAI"
+        }
+      },
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -54,8 +59,7 @@
           "icon": "./assets/images/logo.png",
           "color": "#ffffff"
         }
-      ],
-      "expo-speech-recognition"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

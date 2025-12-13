@@ -37,16 +37,17 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* BOOKINGS */}
+      {/* MAPS */}
       <Tabs.Screen
-        name="bookings"
+        name="maps"
         options={{
-          title: "Bookings",
+          title: "Map",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="calendar" size={22} color={color} />
+            <Ionicons name="navigate" size={22} color={color} />
           ),
         }}
       />
+
 
       {/* CREATE EVENTS — CUSTOM FLOATING BUTTON */}
       <Tabs.Screen
@@ -185,7 +186,7 @@ function FloatingAddButton({ onPress }: any) {
               color: "#FFF",
               fontFamily: "Cereal-regular",
               fontSize: 16,
-              fontWeight:400,
+              fontWeight: 400,
               opacity: nwOpacity,
               transform: [{ scale: nwScale }],
             }}
