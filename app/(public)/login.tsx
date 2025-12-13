@@ -3,6 +3,7 @@ import { Colors } from "@/constants/theme"; // your theme
 import { useAuth } from "@/contexts/AuthContext";
 import { core_services } from "@/services/api";
 import { decodeJwt } from "@/utils/jwt";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
@@ -12,6 +13,7 @@ export default function LoginScreen() {
   const { login } = useAuth();
   const colorScheme = useColorScheme() ?? "dark";
   const theme = Colors[colorScheme];
+  const [showPassword, setShowPassword] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,9 +47,35 @@ export default function LoginScreen() {
       // navigate to home (tabs)
       router.replace("/");
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Login failed";
+      console.log("FULL ERROR:", err); // <- shows actual error
+
+      let msg = "Login failed";
+
+      // 1) If API returned plain JSON { error: "Invalid credentials" }
+      if (err?.error) {
+        msg = err.error;
+      }
+
+      // 2) axios-like structured error
+      else if (err?.response?.data?.error) {
+        msg = err.response.data.error;
+      }
+      else if (err?.response?.data?.message) {
+        msg = err.response.data.message;
+      }
+
+      // 3) If message contains JSON
+      else if (typeof err?.message === "string" && err.message.includes("{")) {
+        try {
+          const parsed = JSON.parse(err.message.replace("Error: ", ""));
+          if (parsed.error) msg = parsed.error;
+          else if (parsed.message) msg = parsed.message;
+        } catch (_) { }
+      }
+
       alert(msg);
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -67,14 +95,32 @@ export default function LoginScreen() {
           autoCapitalize="none"
         />
 
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#aaa"
-          value={password}
-          onChangeText={setPassword}
-          style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2 }]}
-          secureTextEntry
-        />
+        <View style={{ position: "relative" }}>
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#aaa"
+            value={password}
+            onChangeText={setPassword}
+            style={[styles.input, { backgroundColor: theme.bg3, color: theme.bg2, paddingRight: 45 }]}
+            secureTextEntry={!showPassword}
+          />
+
+          <TouchableOpacity
+            onPress={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              right: 14,
+              top: 12,
+            }}
+          >
+            <Ionicons
+              name={showPassword ? "eye-off" : "eye"}
+              size={22}
+              color="#aaa"
+            />
+          </TouchableOpacity>
+        </View>
+
 
         <TouchableOpacity onPress={handleLogin} style={[styles.btn, { backgroundColor: theme.bg2 }]} disabled={loading}>
           {loading ? <ActivityIndicator color={theme.bg1} /> : <Text style={[styles.btnText, { color: theme.bg1 }]}>Sign In</Text>}

@@ -1,5 +1,6 @@
 import { core_services } from "@/services/api";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
 
 type EventsContextType = {
   events: any[];
@@ -10,6 +11,7 @@ type EventsContextType = {
 const EventsContext = createContext<EventsContextType | null>(null);
 
 export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,9 +29,12 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // 🔥 API CALL ONLY ONCE
-    fetchEvents();
+    fetchEvents();   
   }, []);
+
+  useEffect(() => {
+    if (user) fetchEvents();
+  }, [user]);
 
   return (
     <EventsContext.Provider value={{ events, loading, refreshEvents: fetchEvents }}>

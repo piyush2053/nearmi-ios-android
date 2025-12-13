@@ -189,7 +189,33 @@ export default function EventDetailsScreen() {
           <Text style={styles.desc}>
             {attendees.length} people already joined
           </Text>
+
+          <View style={styles.attendeeRow}>
+            {attendees.slice(0, 3).map((person, index) => {
+              const imgUrl = person.ImageUrl || "https://randomuser.me/api/portraits/men/72.jpg";
+
+              return (
+                <View
+                  key={person.UserId}
+                  style={[
+                    styles.attendeeAvatarWrap,
+                    { marginLeft: index === 0 ? 0 : -12 }
+                  ]}
+                >
+                  <Image source={{ uri: imgUrl }} style={styles.attendeeAvatar} />
+                </View>
+              );
+            })}
+
+            {/* +COUNT BUBBLE */}
+            {attendees.length > 3 && (
+              <View style={[styles.attendeeMore, { marginLeft: -12 }]}>
+                <Text style={styles.attendeeMoreText}>+{attendees.length - 3}</Text>
+              </View>
+            )}
+          </View>
         </View>
+
 
         {/* SPACING for bottom bar */}
         <View style={{ height: 100 }} />
@@ -363,6 +389,49 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 35,
     justifyContent: "center",
     alignItems: "center",
+  },
+  attendeeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+
+  attendeeAvatarWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: "#ddd",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  attendeeAvatar: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 20,
+  },
+
+  attendeeMore: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#020f2cff",
+    borderWidth: 0.2,
+    borderColor: "#29C9FF",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  attendeeMoreText: {
+    color: "#29C9FF",
+    fontWeight: "700",
   },
 
 });
