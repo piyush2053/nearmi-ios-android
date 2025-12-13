@@ -192,7 +192,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     width: 120,
-    elevation: 10,
   },
 
   logoutText: {

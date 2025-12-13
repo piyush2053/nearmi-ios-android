@@ -402,10 +402,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     backgroundColor: "#ddd",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
   },
 
   attendeeAvatar: {
@@ -423,10 +419,6 @@ const styles = StyleSheet.create({
     borderColor: "#29C9FF",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
   },
 
   attendeeMoreText: {

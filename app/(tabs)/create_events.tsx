@@ -295,10 +295,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 10,
     marginHorizontal: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
   },
 
   inputLine: {
@@ -426,11 +422,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1E1E1E55", // subtle dark pill
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: "#1E1E1E55", // subtle dark pil
   },
 
   ticketCount: {
