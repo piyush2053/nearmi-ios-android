@@ -523,21 +523,27 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     key={event.EventID}
                     onPress={() => router.push(`/event_details?id=${event.EventID}`)}
-                    style={[styles.eventCard, { backgroundColor: theme.bg2 }]}
+                    style={[styles.eventCardNew, { backgroundColor: theme.bg7 }]}
                     activeOpacity={0.85}
                   >
-                    <Image source={imgSource} style={styles.eventImage} resizeMode="cover" />
+                    {/* LEFT IMAGE */}
+                    <Image source={imgSource} style={styles.eventImgNew} />
 
-                    <View style={[styles.eventMeta, { backgroundColor: "rgba(0, 0, 0, 0.7)" }]}>
-                      <Text style={styles.eventTitle} numberOfLines={1}>
+                    {/* RIGHT CONTENT */}
+                    <View style={styles.eventInfo}>
+                      <Text style={styles.eventDate}>{whenText}</Text>
+
+                      <Text style={styles.eventTitleNew} numberOfLines={2}>
                         {event.EventTitle}
                       </Text>
-                      <Text style={styles.eventWhen}>{whenText}</Text>
-                      <Text style={styles.eventWhen}>
-                        <Ionicons name="navigate" /> {distText}
-                      </Text>
+
+                      <View style={styles.eventLocationRow}>
+                        <Ionicons name="location-outline" size={14} color="#999" />
+                        <Text style={styles.eventLocationText}>{distText}</Text>
+                      </View>
                     </View>
                   </TouchableOpacity>
+
                 );
               })}
 
@@ -599,7 +605,7 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             style={{ marginTop: 10 }}
           >
-            {SPONSORED_EVENTS.map((item:any) => (
+            {SPONSORED_EVENTS.map((item: any) => (
               <View
                 key={item.id}
                 style={[
@@ -607,8 +613,6 @@ export default function HomeScreen() {
                   {
                     backgroundColor: theme.bg2,
                     marginRight: 14,
-                    borderWidth: 0.5,
-                    borderColor: theme.bg6,
                   },
                 ]}
               >
@@ -617,8 +621,6 @@ export default function HomeScreen() {
                   style={styles.eventImage}
                   resizeMode="cover"
                 />
-
-                {/* Sponsored Badge */}
                 <View
                   style={{
                     position: "absolute",
@@ -838,4 +840,51 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     padding: 4,
   },
+  eventCardNew: {
+    width: 250,
+    height: 110,
+    borderRadius: 18,
+    flexDirection: "row",
+    padding: 10,
+    marginRight: 14,
+    alignItems: "center",
+  },
+
+  eventImgNew: {
+    width: 90,
+    height: "100%",
+    borderRadius: 14,
+  },
+
+  eventInfo: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: "center",
+  },
+
+  eventDate: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 4,
+  },
+
+  eventTitleNew: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 6,
+  },
+
+  eventLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
+  },
+
+  eventLocationText: {
+    color: "#aaa",
+    marginLeft: 4,
+    fontSize: 12,
+  },
+
 });
